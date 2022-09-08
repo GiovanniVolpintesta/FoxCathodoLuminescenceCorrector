@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+<BorderPane xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="foxinhead.foxcathodoluminescencecorrector.ConverterWindowController"
+            fx:id="mainPane"
+            minWidth="351" minHeight="160"
+>
+    <top>
+        <FlowPane BorderPane.alignment="TOP_LEFT" minWidth="571" hgap="5" vgap="5">
+            <BorderPane.margin>
+                <Insets top="5" left="5" right="5" />
+            </BorderPane.margin>
+
+            <Button minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onOpenFileButtonClick" text="&#x1F4F7;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <Button minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onOpenDirectoryButtonClick" text="&#x1F4C2;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <Button fx:id="firstButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onFirstImageButtonClick" text="&#x2b9c;&#x2b9c;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <Button fx:id="previousButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onPreviousImageButtonClick" text="&#x2b9c;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <Button fx:id="nextButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onNextImageButtonClick" text="&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <Button fx:id="lastButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onLastImageButtonClick" text="&#x2b9e;&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <Button fx:id="saveButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onSaveButtonClick" text="&#x1F4BE;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <!--<ToggleButton fx:id="maximizeToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onToggleMaximize" text="&#x1F50D;" textAlignment="CENTER"><font><Font size="15"/></font></ToggleButton>-->
+        </FlowPane>
+    </top>
+
+    <center>
+        <HBox fx:id="imagesPane" BorderPane.alignment="TOP_LEFT" spacing="10"
+              prefWidth="410" prefHeight="200"
+              minWidth="160" minHeight="75"
+        >
+            <BorderPane.margin>
+                <Insets top="10" left="10" right="10" bottom="10" />
+            </BorderPane.margin>
+
+            <ImageView fx:id="sourceImageView"
+                       preserveRatio="true"
+                       HBox.hgrow="ALWAYS">
+            </ImageView>
+            <ImageView fx:id="convertedImageView"
+                       preserveRatio="true"
+                       HBox.hgrow="ALWAYS">
+            </ImageView>
+        </HBox>
+    </center>
+
+</BorderPane>

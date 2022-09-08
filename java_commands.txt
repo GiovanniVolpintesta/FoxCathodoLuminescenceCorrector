@@ -1,0 +1,30 @@
+jdeps commands
+set PATH=%PATH%;C:\Program Files\Java\jdk-17.0.1\bin
+D:
+cd Users\giova\IntelliJ\FoxImageConverter\out\artifacts\FoxImageConverterJar
+
+
+
+Creare Runtime Image minima:
+jlink --output MinimamRuntimeImage --module-path .;"C:\Program Files\Java\javafx-sdk-17.0.1\jmods";"C:\Program Files\Java\jdk-17.0.1\jmods" --add-modules java.base,javafx.controls,javafx.fxml
+jlink --no-header-files --no-man-pages --compress=2 --strip-debug --output MinimamRuntimeImage --module-path .;"C:\Program Files\Java\javafx-sdk-17.0.1\jmods";"C:\Program Files\Java\jdk-17.0.1\jmods" --add-modules java.base,javafx.controls,javafx.fxml
+
+List moduli Runtime Image minima:
+MinimamRuntimeImage\bin\java.exe --list-modules
+
+Creare il jar
+jar --create --verbose --file FoxImageConverter.jar ^
+--main-class foxinhead.foxcathodoluminescencecorrector.ConverterApplication ^
+-C D:\Users\giova\IntelliJ\FoxImageConverter\target\classes .
+
+Vedere dipendenze dell'app
+jdeps --recursive -summary --module-path C:\opencv\build\java;"C:\Program Files\Java\javafx-sdk-17.0.1\lib" FoxImageConverterJar.jar
+
+lanciare il modulo dai class
+java --module-path target\classes;"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.fxml.jar";"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.base.jar";"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.graphics.jar";"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.controls.jar";"C:\opencv\build\java\opencv-455.jar" --add-modules foxinhead.foxcathodoluminescencecorrector foxinhead.foxcathodoluminescencecorrector.ConverterApplication
+
+lanciare il modulo dai jar
+java --module-path "out\artifacts\FoxImageConverter\FoxImageConverter.jar";"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.fxml.jar";"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.base.jar";"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.graphics.jar";"C:\Program Files\Java\javafx-sdk-17.0.1\lib\javafx.controls.jar";"C:\opencv\build\java\opencv-455.jar" --add-modules foxinhead.foxcathodoluminescencecorrector foxinhead.foxcathodoluminescencecorrector.ConverterApplication
+
+lanciare il modulo dai jar con runtime image minima:
+MinimamRuntimeImage\bin\java.exe --module-path "out\artifacts\FoxImageConverter\FoxImageConverter.jar";"C:\opencv\build\java\opencv-455.jar" --add-modules foxinhead.foxcathodoluminescencecorrector foxinhead.foxcathodoluminescencecorrector.ConverterApplication
