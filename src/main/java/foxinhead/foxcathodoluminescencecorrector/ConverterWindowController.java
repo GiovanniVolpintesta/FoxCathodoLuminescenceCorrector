@@ -44,6 +44,8 @@ public class ConverterWindowController
 
     private final FileManager fileManager;
     private int currentFileIndex = -1;
+    private boolean isBrokenOrEmptySrc = false;
+    private boolean isBrokenOrEmptyDst = false;
 
     private boolean isImageWiderThanArea = false;
     private boolean isImageHigherThanArea = false;
@@ -82,6 +84,11 @@ public class ConverterWindowController
         {
             useImageOriginalSize = newValue;
             resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+            if (useImageOriginalSize)
+            {
+                horizontalScrollBar.setValue(0);
+                verticalScrollBar.setValue(0);
+            }
         });
 
         double minWidth = mainPane.getMinWidth();
@@ -167,12 +174,18 @@ public class ConverterWindowController
                 dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType);
             }
         }
+
+        isBrokenOrEmptySrc = false;
+        isBrokenOrEmptyDst = false;
+
         if (srcImageInputStream == null)
         {
+            isBrokenOrEmptySrc = true;
             srcImageInputStream = new FileInputStream(fileManager.getFilesCount() > 0 ? brokenFileImagePath : defaultSrcImagePath);
         }
         if (dstImageInputStream == null)
         {
+            isBrokenOrEmptyDst = true;
             dstImageInputStream = new FileInputStream(fileManager.getFilesCount() > 0 ? brokenFileImagePath : defaultDstImagePath);
         }
 
@@ -186,8 +199,13 @@ public class ConverterWindowController
         convertedImageView.setImage(convertedImage);
         resizeImages(paneWidth, paneHeight);
 
-        //setMaxImageDimension(sourceImageView, maxImageWidth, paneHeight);
-        //setMaxImageDimension(convertedImageView, maxImageWidth, paneHeight);
+        maximizeToggleButton.setDisable(isBrokenOrEmptySrc || isBrokenOrEmptyDst);
+
+        if (useImageOriginalSize)
+        {
+            horizontalScrollBar.setValue(0);
+            verticalScrollBar.setValue(0);
+        }
 
         firstButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
         previousButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
@@ -231,8 +249,8 @@ public class ConverterWindowController
                 verticalScrollValue = 0;
             }
 
-            horizontalScrollBar.setVisible(useImageOriginalSize && isImageWiderThanArea);
-            verticalScrollBar.setVisible(useImageOriginalSize && isImageHigherThanArea);
+            horizontalScrollBar.setVisible(useImageOriginalSize && isImageWiderThanArea && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst));
+            verticalScrollBar.setVisible(useImageOriginalSize && isImageHigherThanArea && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst));
         }
         else
         {
@@ -266,7 +284,7 @@ public class ConverterWindowController
         convertedImageView.setFitWidth(Math.min(imageViewDesiredWidth, cnvImageWidth));
         convertedImageView.setFitHeight(Math.min(imageViewDesiredHeight, cnvImageHeight));
 
-        if (imagesHaveSameSize && useImageOriginalSize && (isImageWiderThanArea || isImageHigherThanArea))
+        if (imagesHaveSameSize && useImageOriginalSize && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst) && (isImageWiderThanArea || isImageHigherThanArea))
         {
             sourceImageView.setViewport(new Rectangle2D(viewportPoxX, viewportPoxY, viewportWidth, viewportHeight));
             convertedImageView.setViewport(new Rectangle2D(viewportPoxX, viewportPoxY, viewportWidth, viewportHeight));
