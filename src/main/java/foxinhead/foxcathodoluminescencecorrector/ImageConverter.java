@@ -1,9 +1,8 @@
 package foxinhead.foxcathodoluminescencecorrector;
 
-import org.opencv.core.CvException;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
+import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
@@ -14,9 +13,10 @@ public class ImageConverter
     {
         NONE
         , GREYSCALE
+        , CATHODO_LUMINESCENCE_CORRECTION
     }
 
-    private static final String[] inputSupportedTypes = { "gif", "png", "bmp", "jpg", "jpeg", "jfif" };
+    private static final String[] inputSupportedTypes = { "gif", "png", "bmp", "jpg", "jpeg", "jfif", "tif"};
     private static final String[] outputSupportedTypes = { "gif", "png", "bmp", "jpg", "jpeg" };
     private static final String[] inputFileFilters; // initialized in static constructor
     private static final String[] outputFileFilters; // initialized in static constructor
@@ -114,6 +114,8 @@ public class ImageConverter
         {
             case GREYSCALE:
                 return ConvertToGreyScale(source);
+            case CATHODO_LUMINESCENCE_CORRECTION:
+                return PerformCathodoLuminescenceCorrection(source);
             case NONE:
             default:
                 Mat dest = Mat.zeros(source.rows(), source.cols(), source.type());
@@ -124,17 +126,74 @@ public class ImageConverter
 
     private static Mat ConvertToGreyScale (Mat source)
     {
-        Mat dest = Mat.zeros(source.rows(), source.cols(), source.type());
-        for (int r = 0; r < source.rows(); r++)
-        {
-            for (int c = 0; c < source.cols(); c++)
-            {
-                double[] pixel = source.get(r, c);
-                double brightness = pixel[0]*0.3 + pixel[1]*0.6 + pixel[2]*0.1;
-                pixel[0] = pixel[1] = pixel[2] = brightness;
-                dest.put(r, c, pixel);
-            }
-        }
-        return dest;
+        // Convert in greyscale
+        Mat greyscaleMat = Mat.zeros(source.rows(), source.cols(), CvType.CV_8UC1);
+        Imgproc.cvtColor(source, greyscaleMat, Imgproc.COLOR_RGB2GRAY);
+        return greyscaleMat;
+    }
+
+    private static Mat PerformCathodoLuminescenceCorrection (Mat source)
+    {
+        int nRows = source.rows();
+        int nCols = source.cols();
+
+        // Convert to three 32-bit float components, normalized in [0-1] range
+        Mat source32F = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        source.convertTo(source32F, CvType.CV_32FC3);
+        //Core.multiply(source32F, new Scalar(1.0/255, 1.0/255, 1.0/255), source32F);
+
+        // Convert in HSV
+        Mat hsvMat = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        Imgproc.cvtColor(source32F, hsvMat, Imgproc.COLOR_RGB2HSV);
+        source32F.release();
+
+        // Extract channels
+        Mat hChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.extractChannel(hsvMat, hChannel, 0);
+        Mat sChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.extractChannel(hsvMat, sChannel, 1);
+        Mat vChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.extractChannel(hsvMat, vChannel, 2);
+
+        // Apply gaussian blur with a big sigma that is dependent on the image size
+        double sigma1 = Math.min(nRows, nCols) / 5.0;
+        Mat blurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1); // the size of the filter is computed using the sigma
+
+        // Result of Brightness
+        Mat vChannelReduced = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.divide(vChannel, blurred, vChannelReduced);
+        vChannel.release();
+
+        double sigma2 = 10;
+        // Filter minimo
+        Mat reducedBlurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Imgproc.GaussianBlur(vChannelReduced, reducedBlurred, new Size(0, 0), sigma2, sigma2); // the size of the filter is computed using the sigma
+
+        Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.MinMaxLocResult reducedBlurredMinMax = Core.minMaxLoc(reducedBlurred);
+        Core.subtract(vChannelReduced, new Scalar(reducedBlurredMinMax.minVal), vChannelNew);
+
+        /* MaxValue=getResult("Max", nResults-1);
+	setThreshold(0, MaxValue);
+	run("NaN Background"); */
+
+        // recombine channels
+        Mat hsvResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        Core.insertChannel(hChannel, hsvResult, 0);
+        Core.insertChannel(sChannel, hsvResult, 1);
+        Core.insertChannel(vChannelNew, hsvResult, 2);
+
+        Mat rgbResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        Imgproc.cvtColor(hsvMat, rgbResult, Imgproc.COLOR_HSV2RGB);
+
+        // Convert back to three 8-bit float components in [0-255] range
+        Mat resultToConvert = rgbResult;
+        Mat result = Mat.zeros(nRows, nCols, CvType.CV_8UC3);
+        //Core.multiply(resultToConvert, new Scalar(255, 255, 255), resultToConvert);
+        resultToConvert.convertTo(result, CvType.CV_8UC3);
+
+        System.out.println("color: " + Arrays.toString(result.get(100, 100))); // TODO: delete
+        return result;
     }
 }

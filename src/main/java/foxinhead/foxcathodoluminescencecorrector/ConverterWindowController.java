@@ -52,7 +52,7 @@ public class ConverterWindowController
     private final FileManager fileManager;
     private int currentFileIndex = -1;
 
-    public static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.GREYSCALE;
+    public static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
 
     public ConverterWindowController ()
     {
