@@ -71,39 +71,6 @@ public class FileManager
         }
     }
 
-    public InputStream getSourceImageInputStream (int fileIndex) throws FileNotFoundException
-    {
-        File file = getFileAtIndex(fileIndex);
-        if (file != null && file.exists())
-        {
-            FileInputStream inputStream = new FileInputStream(file.getAbsolutePath());
-            try
-            {
-                if (inputStream.available() <= 0)
-                {
-                    inputStream.close();
-                    inputStream = null;
-                }
-            } catch (Exception e)
-            {
-                try
-                {
-                    inputStream.close();
-                }
-                catch (Exception e2)
-                {
-                    // TODO: how should i release the resource?
-                }
-                finally
-                {
-                    inputStream = null;
-                }
-            }
-            return inputStream;
-        }
-        return null;
-    }
-
     public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType) throws IllegalArgumentException
     {
         File file = getFileAtIndex(fileIndex);
@@ -133,21 +100,42 @@ public class FileManager
             {
                 throw new UnsupportedEncodingException("The source file has not a supported encoding. Only the following encodings are supported: " + Arrays.toString(ImageConverter.getInputFileFilters()));
             }
+
+            InputStream convertedImage = ImageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile));
+            if (convertedImage == null || convertedImage.available() == 0)
+            {
+                if (convertedImage != null)
+                {
+                    convertedImage.close();
+                }
+                throw new IOException("The file conversion has failed");
+            }
+
             if (!dstFile.createNewFile())
             {
                 throw new IOException("Cannot create the destination file");
             }
-            InputStream convertedImage = ImageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile));
-            OutputStream fileOutputStream = new FileOutputStream(dstFile);
-            byte[] bytes = new byte[1024];
-            while (convertedImage.available() > 0)
+
+            OutputStream fileOutputStream = null;
+            try
             {
-                int readBytesNum = convertedImage.read(bytes, 0, bytes.length);
-                fileOutputStream.write(bytes, 0, readBytesNum);
+                fileOutputStream = new FileOutputStream(dstFile);
+                byte[] bytes = new byte[1024];
+                while (convertedImage.available() > 0)
+                {
+                    int readBytesNum = convertedImage.read(bytes, 0, bytes.length);
+                    fileOutputStream.write(bytes, 0, readBytesNum);
+                }
             }
-            convertedImage.close();
-            fileOutputStream.flush();
-            fileOutputStream.close();
+            finally
+            {
+                convertedImage.close();
+                if (fileOutputStream != null)
+                {
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
+                }
+            }
         }
     }
 

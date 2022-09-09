@@ -22,6 +22,7 @@ public class ConverterWindowController
     private final String defaultSrcImagePath = ".\\images\\default_src_image.png";
     private final String defaultDstImagePath = ".\\images\\default_dst_image.png";
     private final String brokenFileImagePath = ".\\images\\broken_file.png";
+    private final String previewImageType = "png";
 
     @FXML
     private Pane mainPane;
@@ -122,7 +123,7 @@ public class ConverterWindowController
         saveButton.setDisable(fileManager.getFilesCount() == 0);
     }
 
-    private void setCurrentFileIndex (int index) throws IOException
+    private void setCurrentFileIndex (int index) throws IOException, IllegalArgumentException
     {
         currentFileIndex = -1;
 
@@ -132,15 +133,24 @@ public class ConverterWindowController
         {
             currentFileIndex = index;
             File currentFile = fileManager.getFileAtIndex(currentFileIndex);
-            srcImageInputStream = fileManager.getSourceImageInputStream(currentFileIndex);
             try
             {
-                dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType, FileManager.getFileType(currentFile));
+                // use a preview type here because the image is only shown in UI. This type is not the one of
+                // the saved image (the image will be converted again at save time), neither the one of the source
+                // image. Its purpose is just to allow the java UI to work correctly.
+                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType);
+                dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType, previewImageType);
             }
             catch (IllegalArgumentException e)
             {
-                // The image type is not supported as conversion output, so we'll proceed with the default conversion output type
-                dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType);
+                // This should never happen.
+                // The image type is not supported as conversion output.
+                // Change previewImageType value to a supported one.
+                srcImageInputStream.close(); // release resources
+                srcImageInputStream = null;
+                dstImageInputStream.close();
+                dstImageInputStream = null;
+                throw e; // rethrow the caught exception
             }
         }
         if (srcImageInputStream == null)
