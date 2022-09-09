@@ -71,39 +71,6 @@ public class FileManager
         }
     }
 
-    public InputStream getSourceImageInputStream (int fileIndex) throws FileNotFoundException
-    {
-        File file = getFileAtIndex(fileIndex);
-        if (file != null && file.exists())
-        {
-            FileInputStream inputStream = new FileInputStream(file.getAbsolutePath());
-            try
-            {
-                if (inputStream.available() <= 0)
-                {
-                    inputStream.close();
-                    inputStream = null;
-                }
-            } catch (Exception e)
-            {
-                try
-                {
-                    inputStream.close();
-                }
-                catch (Exception e2)
-                {
-                    // TODO: how should i release the resource?
-                }
-                finally
-                {
-                    inputStream = null;
-                }
-            }
-            return inputStream;
-        }
-        return null;
-    }
-
     public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType) throws IllegalArgumentException
     {
         File file = getFileAtIndex(fileIndex);
