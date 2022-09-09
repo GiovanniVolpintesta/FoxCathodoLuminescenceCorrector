@@ -141,15 +141,13 @@ public class ImageConverter
         int nRows = source.rows();
         int nCols = source.cols();
 
-        // Convert to three 32-bit float components, normalized in [0-1] range
+        // Convert to three 32-bit float components ranging in [0-255]
         Mat source32F = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
         source.convertTo(source32F, CvType.CV_32FC3);
-        //Core.multiply(source32F, new Scalar(1.0/255, 1.0/255, 1.0/255), source32F);
 
-        // Convert in HSV
+        // Convert in HSV (ranging in [0-255])
         Mat hsvMat = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
         Imgproc.cvtColor(source32F, hsvMat, Imgproc.COLOR_RGB2HSV);
-        source32F.release();
 
         // Extract channels
         Mat hChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
@@ -158,6 +156,7 @@ public class ImageConverter
         Core.extractChannel(hsvMat, sChannel, 1);
         Mat vChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
         Core.extractChannel(hsvMat, vChannel, 2);
+        Core.MinMaxLocResult vChannelMinMax = Core.minMaxLoc(vChannel);
 
         // Apply gaussian blur with a big sigma that is dependent on the image size
         double sigma1 = Math.min(nRows, nCols) / 5.0;
@@ -165,18 +164,32 @@ public class ImageConverter
         Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1); // the size of the filter is computed using the sigma
 
         // Result of Brightness
-        Mat vChannelReduced = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Core.divide(vChannel, blurred, vChannelReduced);
-        vChannel.release();
+        Mat vChannelDivided = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.divide(vChannel, blurred, vChannelDivided);
+        Core.MinMaxLocResult vChannelDividedMinMax = Core.minMaxLoc(vChannelDivided);
+        System.out.println("vChannelDivided min = " + vChannelDividedMinMax.minVal);
+        System.out.println("vChannelDivided max = " + vChannelDividedMinMax.maxVal);
+
+        Mat vChannelDivided_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.subtract(vChannelDivided, new Scalar(vChannelDividedMinMax.minVal), vChannelDivided_0_255);
+        Core.multiply(vChannelDivided_0_255, new Scalar(255.0 / (vChannelDividedMinMax.maxVal-vChannelDividedMinMax.minVal)), vChannelDivided_0_255);
+        Core.MinMaxLocResult vChannelDivided_0_255_MinMax = Core.minMaxLoc(vChannelDivided_0_255);
+        System.out.println("vChannelDivided_0_255 min = " + vChannelDivided_0_255_MinMax.minVal);
+        System.out.println("vChannelDivided_0_255 max = " + vChannelDivided_0_255_MinMax.maxVal);
 
         double sigma2 = 10;
         // Filter minimo
-        Mat reducedBlurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Imgproc.GaussianBlur(vChannelReduced, reducedBlurred, new Size(0, 0), sigma2, sigma2); // the size of the filter is computed using the sigma
+        Mat vChannelDividedLowBlur = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Imgproc.GaussianBlur(vChannelDivided_0_255, vChannelDividedLowBlur, new Size(0, 0), sigma2, sigma2); // the size of the filter is computed using the sigma
+        Core.MinMaxLocResult vChannelDividedLowBlurMinMax = Core.minMaxLoc(vChannelDividedLowBlur);
+        System.out.println("vChannelDividedLowBlur min = " + vChannelDividedLowBlurMinMax.minVal);
+        System.out.println("vChannelDividedLowBlur max = " + vChannelDividedLowBlurMinMax.maxVal);
 
         Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Core.MinMaxLocResult reducedBlurredMinMax = Core.minMaxLoc(reducedBlurred);
-        Core.subtract(vChannelReduced, new Scalar(reducedBlurredMinMax.minVal), vChannelNew);
+        Core.subtract(vChannelDivided_0_255, new Scalar(vChannelDividedLowBlurMinMax.minVal), vChannelNew);
+        Core.MinMaxLocResult vChannelNewMinMax = Core.minMaxLoc(vChannelNew);
+        Mat vChannelNew_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.multiply(vChannelNew, new Scalar(255.0 / (vChannelNewMinMax.maxVal - vChannelNewMinMax.minVal)), vChannelNew_0_255);
 
         /* MaxValue=getResult("Max", nResults-1);
 	setThreshold(0, MaxValue);
@@ -186,18 +199,27 @@ public class ImageConverter
         Mat hsvResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
         Core.insertChannel(hChannel, hsvResult, 0);
         Core.insertChannel(sChannel, hsvResult, 1);
-        Core.insertChannel(vChannelNew, hsvResult, 2);
+        Core.insertChannel(vChannelNew_0_255, hsvResult, 2);
 
         Mat rgbResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
-        Imgproc.cvtColor(hsvMat, rgbResult, Imgproc.COLOR_HSV2RGB);
+        Imgproc.cvtColor(hsvResult, rgbResult, Imgproc.COLOR_HSV2RGB);
 
         // Convert back to three 8-bit float components in [0-255] range
         Mat resultToConvert = rgbResult;
         Mat result = Mat.zeros(nRows, nCols, CvType.CV_8UC3);
-        //Core.multiply(resultToConvert, new Scalar(255, 255, 255), resultToConvert);
         resultToConvert.convertTo(result, CvType.CV_8UC3);
 
-        System.out.println("color: " + Arrays.toString(result.get(100, 100))); // TODO: delete
-        return result;
+        System.out.println("source: " + Arrays.toString(source.get(100, 100))); // TODO: delete
+        System.out.println("source32F: " + Arrays.toString(source32F.get(100, 100))); // TODO: delete
+        System.out.println("hsvMat: " + Arrays.toString(hsvMat.get(100, 100))); // TODO: delete
+        System.out.println("vChannel: " + Arrays.toString(vChannel.get(100, 100))); // TODO: delete
+        System.out.println("sigma1: " + sigma1); // TODO: delete
+        System.out.println("blurred (filter): " + Arrays.toString(blurred.get(100, 100))); // TODO: delete
+        System.out.println("vChannelDivided (Result of Brightness): " + Arrays.toString(vChannelDivided.get(100, 100))); // TODO: delete
+        System.out.println("vChannelDividedLowBlur (filter minimo): " + Arrays.toString(vChannelDividedLowBlur.get(100, 100))); // TODO: delete
+        System.out.println("vChannelNew: " + Arrays.toString(vChannelNew.get(100, 100))); // TODO: delete
+        System.out.println("hsvResult: " + Arrays.toString(hsvResult.get(100, 100))); // TODO: delete
+        System.out.println("rgbResult: " + Arrays.toString(rgbResult.get(100, 100))); // TODO: delete
+        return rgbResult;
     }
 }
