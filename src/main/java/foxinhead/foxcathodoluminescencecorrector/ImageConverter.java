@@ -1,9 +1,9 @@
 package foxinhead.foxcathodoluminescencecorrector;
 
-import org.opencv.core.CvException;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
+import org.opencv.core.*;
+
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
@@ -14,6 +14,7 @@ public class ImageConverter
     {
         NONE
         , GREYSCALE
+        , CATHODO_LUMINESCENCE_CORRECTION
     }
 
     // png, bmp, jpg, jpeg, webp, tif, ppm, pnm: conversion supported
@@ -92,13 +93,13 @@ public class ImageConverter
 
     private static ByteArrayInputStream internalConvertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType)
     {
-        Mat sourceMatrix = Imgcodecs.imread(srcImageFileName);
-        Mat destMatrix = ConvertMat(sourceMatrix, conversionType);
+        Mat m = Imgcodecs.imread(srcImageFileName);
+        m = ConvertMat(m, conversionType);
         MatOfByte encodedImageBytes = new MatOfByte();
         ByteArrayInputStream inputStream = null;
         try
         {
-            Imgcodecs.imencode("." + outputType, destMatrix, encodedImageBytes);
+            Imgcodecs.imencode("." + outputType, m, encodedImageBytes);
             inputStream = new ByteArrayInputStream(encodedImageBytes.toArray());
         }
         catch (CvException e)
@@ -107,6 +108,10 @@ public class ImageConverter
             // the file cannot be read
             encodedImageBytes = new MatOfByte();
             inputStream = null;
+        }
+        finally
+        {
+            m.release();
         }
         return inputStream;
     }
@@ -117,6 +122,8 @@ public class ImageConverter
         {
             case GREYSCALE:
                 return ConvertToGreyScale(source);
+            case CATHODO_LUMINESCENCE_CORRECTION:
+                return PerformCathodoLuminescenceCorrection(source);
             case NONE:
             default:
                 Mat dest = Mat.zeros(source.rows(), source.cols(), source.type());
@@ -127,17 +134,124 @@ public class ImageConverter
 
     private static Mat ConvertToGreyScale (Mat source)
     {
-        Mat dest = Mat.zeros(source.rows(), source.cols(), source.type());
-        for (int r = 0; r < source.rows(); r++)
-        {
-            for (int c = 0; c < source.cols(); c++)
-            {
-                double[] pixel = source.get(r, c);
-                double brightness = pixel[0]*0.3 + pixel[1]*0.6 + pixel[2]*0.1;
-                pixel[0] = pixel[1] = pixel[2] = brightness;
-                dest.put(r, c, pixel);
-            }
-        }
-        return dest;
+        // Convert in greyscale
+        Mat greyscaleMat = Mat.zeros(source.rows(), source.cols(), CvType.CV_8UC1);
+        Imgproc.cvtColor(source, greyscaleMat, Imgproc.COLOR_RGB2GRAY);
+        return greyscaleMat;
+    }
+
+    private static Mat PerformCathodoLuminescenceCorrection (Mat source)
+    {
+        int nRows = source.rows();
+        int nCols = source.cols();
+
+        // Convert to three 32-bit float components ranging in [0-255]
+        Mat source32F = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        source.convertTo(source32F, CvType.CV_32FC3);
+
+        // Convert in HSV (ranging in [0-255])
+        Mat hsvMat = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        Imgproc.cvtColor(source32F, hsvMat, Imgproc.COLOR_RGB2HSV);
+        source32F.release();
+
+        // Extract channels
+        Mat hChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Mat sChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Mat vChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.extractChannel(hsvMat, hChannel, 0);
+        Core.extractChannel(hsvMat, sChannel, 1);
+        Core.extractChannel(hsvMat, vChannel, 2);
+        hsvMat.release();
+        Core.MinMaxLocResult vChannelMinMax = Core.minMaxLoc(vChannel);
+
+        // Apply gaussian blur with a big sigma that is dependent on the image size
+        double sigma1 = Math.min(nRows, nCols) / 5.0;
+        Mat blurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
+
+        // Result of Brightness
+        Mat vChannelDivided = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        // Add 1 to the whole image to avoid divisions with 0 (which produce a NaN result).
+        // This does not introduce a problem, because the image is in 0-255 range
+        // and the result is remapped in 0-255 range later.
+        Core.add(blurred, new Scalar(1.0), blurred);
+        Core.divide(vChannel, blurred, vChannelDivided);
+        vChannel.release();
+        blurred.release();
+        Core.MinMaxLocResult vChannelDividedMinMax = Core.minMaxLoc(vChannelDivided);
+        //System.out.println("vChannelDivided min = " + vChannelDividedMinMax.minVal);
+        //System.out.println("vChannelDivided max = " + vChannelDividedMinMax.maxVal);
+
+        // As vChannelDivided has been computed with a division,
+        // is has very low values, resulting in a pitch black image.
+        // Here the image is remapped linearly in the 0-255 range to make it useful.
+        Mat vChannelDivided_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.subtract(vChannelDivided, new Scalar(vChannelDividedMinMax.minVal), vChannelDivided_0_255);
+        vChannelDivided.release();
+        Core.multiply(vChannelDivided_0_255, new Scalar(255.0 / (vChannelDividedMinMax.maxVal-vChannelDividedMinMax.minVal)), vChannelDivided_0_255);
+        Core.MinMaxLocResult vChannelDivided_0_255_MinMax = Core.minMaxLoc(vChannelDivided_0_255);
+        //System.out.println("vChannelDivided_0_255 min = " + vChannelDivided_0_255_MinMax.minVal);
+        //System.out.println("vChannelDivided_0_255 max = " + vChannelDivided_0_255_MinMax.maxVal);
+
+        double sigma2 = 10;
+        // Filter minimo
+        Mat vChannelDividedLowBlur = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Imgproc.GaussianBlur(vChannelDivided_0_255, vChannelDividedLowBlur, new Size(0, 0), sigma2, sigma2, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
+        Core.MinMaxLocResult vChannelDividedLowBlurMinMax = Core.minMaxLoc(vChannelDividedLowBlur);
+        vChannelDividedLowBlur.release();
+        //System.out.println("vChannelDividedLowBlur min = " + vChannelDividedLowBlurMinMax.minVal);
+        //System.out.println("vChannelDividedLowBlur max = " + vChannelDividedLowBlurMinMax.maxVal);
+
+        // subtract the low blurred image minimum and apply a threshold to zero to negative values to
+        // correct some noise in the lower values of the image
+        Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.subtract(vChannelDivided_0_255, new Scalar(vChannelDividedLowBlurMinMax.minVal), vChannelNew);
+        vChannelDivided_0_255.release();
+        Imgproc.threshold(vChannelNew, vChannelNew, 0, 0, Imgproc.THRESH_TOZERO);
+        Core.MinMaxLocResult vChannelNewMinMax = Core.minMaxLoc(vChannelNew);
+        //System.out.println("vChannelNew min = " + vChannelNewMinMax.minVal);
+        //System.out.println("vChannelNew max = " + vChannelNewMinMax.maxVal);
+        Mat vChannelNew_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.multiply(vChannelNew, new Scalar(255.0 / (vChannelNewMinMax.maxVal - vChannelNewMinMax.minVal)), vChannelNew_0_255);
+        vChannelNew.release();
+        Core.MinMaxLocResult vChannelNew_0_255_MinMax = Core.minMaxLoc(vChannelNew_0_255);
+        //System.out.println("vChannelNew_0_255 min = " + vChannelNew_0_255_MinMax.minVal);
+        //System.out.println("vChannelNew_0_255 max = " + vChannelNew_0_255_MinMax.maxVal);
+
+        // recombine channels
+        Mat hsvResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        Core.insertChannel(hChannel, hsvResult, 0);
+        Core.insertChannel(sChannel, hsvResult, 1);
+        Core.insertChannel(vChannelNew_0_255, hsvResult, 2);
+        hChannel.release();
+        sChannel.release();
+        vChannelNew_0_255.release();
+
+        Mat rgbResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        Imgproc.cvtColor(hsvResult, rgbResult, Imgproc.COLOR_HSV2RGB);
+        hsvResult.release();
+
+        // Convert back to three 8-bit float components in [0-255] range
+        Mat result = Mat.zeros(nRows, nCols, CvType.CV_8UC3);
+        rgbResult.convertTo(result, CvType.CV_8UC3);
+        rgbResult.release();
+
+        // To uncomment these debug outputs, the Mat.release() methods in the above code should be commented,
+        // otherwise the matrices will be cleared before the debug outputs and "null" will be printed.
+        //System.out.println("source: " + Arrays.toString(source.get(100, 100)));
+        //System.out.println("source32F: " + Arrays.toString(source32F.get(100, 100)));
+        //System.out.println("hsvMat: " + Arrays.toString(hsvMat.get(100, 100)));
+        //System.out.println("vChannel: " + Arrays.toString(vChannel.get(100, 100)));
+        //System.out.println("sigma1: " + sigma1);
+        //System.out.println("blurred (filter): " + Arrays.toString(blurred.get(100, 100)));
+        //System.out.println("vChannelDivided (Result of Brightness): " + Arrays.toString(vChannelDivided.get(100, 100)));
+        //System.out.println("vChannelDivided_0_255 (Result of Brightness [0-255]): " + Arrays.toString(vChannelDivided_0_255.get(100, 100)));
+        //System.out.println("vChannelDividedLowBlur (filter minimo): " + Arrays.toString(vChannelDividedLowBlur.get(100, 100)));
+        //System.out.println("vChannelNew: " + Arrays.toString(vChannelNew.get(100, 100)));
+        //System.out.println("vChannelNew_0_255: " + Arrays.toString(vChannelNew_0_255.get(100, 100)));
+        //System.out.println("hsvResult: " + Arrays.toString(hsvResult.get(100, 100)));
+        //System.out.println("rgbResult: " + Arrays.toString(rgbResult.get(100, 100)));
+
+        return result;
     }
 }
