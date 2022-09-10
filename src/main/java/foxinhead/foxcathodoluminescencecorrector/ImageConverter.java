@@ -151,17 +151,17 @@ public class ImageConverter
 
         // Extract channels
         Mat hChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Core.extractChannel(hsvMat, hChannel, 0);
         Mat sChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Core.extractChannel(hsvMat, sChannel, 1);
         Mat vChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.extractChannel(hsvMat, hChannel, 0);
+        Core.extractChannel(hsvMat, sChannel, 1);
         Core.extractChannel(hsvMat, vChannel, 2);
         Core.MinMaxLocResult vChannelMinMax = Core.minMaxLoc(vChannel);
 
         // Apply gaussian blur with a big sigma that is dependent on the image size
         double sigma1 = Math.min(nRows, nCols) / 5.0;
         Mat blurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1); // the size of the filter is computed using the sigma
+        Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
 
         // Result of Brightness
         Mat vChannelDivided = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
@@ -170,6 +170,9 @@ public class ImageConverter
         System.out.println("vChannelDivided min = " + vChannelDividedMinMax.minVal);
         System.out.println("vChannelDivided max = " + vChannelDividedMinMax.maxVal);
 
+        // As vChannelDivided has been computed with a division,
+        // is has very low values, resulting in a pitch black image.
+        // Here the image is remapped linearly in the 0-255 range to make it useful.
         Mat vChannelDivided_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
         Core.subtract(vChannelDivided, new Scalar(vChannelDividedMinMax.minVal), vChannelDivided_0_255);
         Core.multiply(vChannelDivided_0_255, new Scalar(255.0 / (vChannelDividedMinMax.maxVal-vChannelDividedMinMax.minVal)), vChannelDivided_0_255);
@@ -180,16 +183,22 @@ public class ImageConverter
         double sigma2 = 10;
         // Filter minimo
         Mat vChannelDividedLowBlur = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Imgproc.GaussianBlur(vChannelDivided_0_255, vChannelDividedLowBlur, new Size(0, 0), sigma2, sigma2); // the size of the filter is computed using the sigma
+        Imgproc.GaussianBlur(vChannelDivided_0_255, vChannelDividedLowBlur, new Size(0, 0), sigma2, sigma2, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
         Core.MinMaxLocResult vChannelDividedLowBlurMinMax = Core.minMaxLoc(vChannelDividedLowBlur);
         System.out.println("vChannelDividedLowBlur min = " + vChannelDividedLowBlurMinMax.minVal);
         System.out.println("vChannelDividedLowBlur max = " + vChannelDividedLowBlurMinMax.maxVal);
 
         Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
         Core.subtract(vChannelDivided_0_255, new Scalar(vChannelDividedLowBlurMinMax.minVal), vChannelNew);
+        // TODO: threshold to transform negative values to 0
         Core.MinMaxLocResult vChannelNewMinMax = Core.minMaxLoc(vChannelNew);
+        System.out.println("vChannelNew min = " + vChannelNewMinMax.minVal);
+        System.out.println("vChannelNew max = " + vChannelNewMinMax.maxVal);
         Mat vChannelNew_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
         Core.multiply(vChannelNew, new Scalar(255.0 / (vChannelNewMinMax.maxVal - vChannelNewMinMax.minVal)), vChannelNew_0_255);
+        Core.MinMaxLocResult vChannelNew_0_255_MinMax = Core.minMaxLoc(vChannelNew_0_255);
+        System.out.println("vChannelNew_0_255 min = " + vChannelNew_0_255_MinMax.minVal);
+        System.out.println("vChannelNew_0_255 max = " + vChannelNew_0_255_MinMax.maxVal);
 
         /* MaxValue=getResult("Max", nResults-1);
 	setThreshold(0, MaxValue);
@@ -216,8 +225,10 @@ public class ImageConverter
         System.out.println("sigma1: " + sigma1); // TODO: delete
         System.out.println("blurred (filter): " + Arrays.toString(blurred.get(100, 100))); // TODO: delete
         System.out.println("vChannelDivided (Result of Brightness): " + Arrays.toString(vChannelDivided.get(100, 100))); // TODO: delete
+        System.out.println("vChannelDivided_0_255 (Result of Brightness [0-255]): " + Arrays.toString(vChannelDivided_0_255.get(100, 100))); // TODO: delete
         System.out.println("vChannelDividedLowBlur (filter minimo): " + Arrays.toString(vChannelDividedLowBlur.get(100, 100))); // TODO: delete
         System.out.println("vChannelNew: " + Arrays.toString(vChannelNew.get(100, 100))); // TODO: delete
+        System.out.println("vChannelNew_0_255: " + Arrays.toString(vChannelNew_0_255.get(100, 100))); // TODO: delete
         System.out.println("hsvResult: " + Arrays.toString(hsvResult.get(100, 100))); // TODO: delete
         System.out.println("rgbResult: " + Arrays.toString(rgbResult.get(100, 100))); // TODO: delete
         return rgbResult;
