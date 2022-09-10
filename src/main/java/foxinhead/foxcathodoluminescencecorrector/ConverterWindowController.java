@@ -2,6 +2,7 @@ package foxinhead.foxcathodoluminescencecorrector;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -19,39 +20,37 @@ import java.util.*;
 
 public class ConverterWindowController
 {
-    private final String defaultSrcImagePath = ".\\images\\default_src_image.png";
-    private final String defaultDstImagePath = ".\\images\\default_dst_image.png";
-    private final String brokenFileImagePath = ".\\images\\broken_file.png";
-    private final String previewImageType = "png";
+    private static final String defaultSrcImagePath = ".\\images\\default_src_image.png";
+    private static final String defaultDstImagePath = ".\\images\\default_dst_image.png";
+    private static final String brokenFileImagePath = ".\\images\\broken_file.png";
+    private static final String previewImageType = "png";
 
-    @FXML
-    private Pane mainPane;
+    @FXML private Pane mainPane;
+    @FXML private HBox imagesPane;
 
-    @FXML
-    private ImageView sourceImageView;
+    @FXML private ImageView sourceImageView;
+    @FXML private ImageView convertedImageView;
 
-    @FXML
-    private ImageView convertedImageView;
+    @FXML private Button firstButton;
+    @FXML private Button previousButton;
+    @FXML private Button nextButton;
+    @FXML private Button lastButton;
+    @FXML private ToggleButton maximizeToggleButton;
+    @FXML private Button saveButton;
 
-    @FXML
-    private HBox imagesPane;
-
-    @FXML
-    private Button firstButton;
-    @FXML
-    private Button previousButton;
-    @FXML
-    private Button nextButton;
-    @FXML
-    private Button lastButton;
-    //@FXML
-    //private ToggleButton maximizeToggleButton;
-
-    @FXML
-    private Button saveButton;
+    @FXML private ScrollBar horizontalScrollBar;
+    @FXML private ScrollBar verticalScrollBar;
 
     private final FileManager fileManager;
     private int currentFileIndex = -1;
+    private boolean isBrokenOrEmptySrc = false;
+    private boolean isBrokenOrEmptyDst = false;
+
+    private boolean isImageWiderThanArea = false;
+    private boolean isImageHigherThanArea = false;
+    private boolean useImageOriginalSize = false;
+    private double horizontalScrollValue = 0;
+    private double verticalScrollValue = 0;
 
     public static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
 
@@ -70,6 +69,26 @@ public class ConverterWindowController
         {
             resizeImages(imagesPane.getWidth(), newValue.doubleValue());
         });
+        horizontalScrollBar.valueProperty().addListener((property, oldValue, newValue) ->
+        {
+            horizontalScrollValue = newValue.doubleValue();
+            resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+        });
+        verticalScrollBar.valueProperty().addListener((property, oldValue, newValue) ->
+        {
+            verticalScrollValue = newValue.doubleValue();
+            resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+        });
+        maximizeToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            useImageOriginalSize = newValue;
+            resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+            if (useImageOriginalSize)
+            {
+                horizontalScrollBar.setValue(0);
+                verticalScrollBar.setValue(0);
+            }
+        });
 
         double minWidth = mainPane.getMinWidth();
         double minHeight = mainPane.getMinHeight();
@@ -79,6 +98,16 @@ public class ConverterWindowController
         double windowHeight = mainPane.getScene().getWindow().getHeight();
         ((Stage)mainPane.getScene().getWindow()).setMinWidth(minWidth + windowWidth - sceneWidth);
         ((Stage)mainPane.getScene().getWindow()).setMinHeight(minHeight + windowHeight - sceneHeight);
+
+        isImageWiderThanArea = false;
+        isImageHigherThanArea = false;
+        useImageOriginalSize = false;
+        horizontalScrollValue = 0;
+        verticalScrollValue = 0;
+        horizontalScrollBar.setVisible(false);
+        verticalScrollBar.setVisible(false);
+        maximizeToggleButton.setSelected(false);
+        maximizeToggleButton.setDisable(true);
 
         setupFilesCollection(fileManager.getWorkingDirectory());
     }
@@ -153,12 +182,18 @@ public class ConverterWindowController
                 throw e; // rethrow the caught exception
             }
         }
+
+        isBrokenOrEmptySrc = false;
+        isBrokenOrEmptyDst = false;
+
         if (srcImageInputStream == null)
         {
+            isBrokenOrEmptySrc = true;
             srcImageInputStream = new FileInputStream(fileManager.getFilesCount() > 0 ? brokenFileImagePath : defaultSrcImagePath);
         }
         if (dstImageInputStream == null)
         {
+            isBrokenOrEmptyDst = true;
             dstImageInputStream = new FileInputStream(fileManager.getFilesCount() > 0 ? brokenFileImagePath : defaultDstImagePath);
         }
 
@@ -172,8 +207,13 @@ public class ConverterWindowController
         convertedImageView.setImage(convertedImage);
         resizeImages(paneWidth, paneHeight);
 
-        //setMaxImageDimension(sourceImageView, maxImageWidth, paneHeight);
-        //setMaxImageDimension(convertedImageView, maxImageWidth, paneHeight);
+        maximizeToggleButton.setDisable(isBrokenOrEmptySrc || isBrokenOrEmptyDst);
+
+        if (useImageOriginalSize)
+        {
+            horizontalScrollBar.setValue(0);
+            verticalScrollBar.setValue(0);
+        }
 
         firstButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
         previousButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
@@ -183,12 +223,89 @@ public class ConverterWindowController
 
     private void resizeImages (double paneWidth, double paneHeight)
     {
-        double imageWidth = (paneWidth - imagesPane.getSpacing()) / 2;
-        double imageHeight = paneHeight;
-        sourceImageView.setFitWidth(Math.min(imageWidth, sourceImageView.getImage().getWidth()));
-        sourceImageView.setFitHeight(Math.min(imageHeight, sourceImageView.getImage().getHeight()));
-        convertedImageView.setFitWidth(Math.min(imageWidth, convertedImageView.getImage().getWidth()));
-        convertedImageView.setFitHeight(Math.min(imageHeight, convertedImageView.getImage().getHeight()));
+        double imageViewDesiredWidth = (paneWidth - imagesPane.getSpacing()) / 2;
+        double imageViewDesiredHeight = paneHeight;
+
+        double srcImageWidth = sourceImageView.getImage().getWidth();
+        double srcImageHeight = sourceImageView.getImage().getHeight();
+        double cnvImageWidth = convertedImageView.getImage().getWidth();
+        double cnvImageHeight = convertedImageView.getImage().getHeight();
+
+        boolean imagesHaveSameSize = (Math.abs(srcImageWidth - cnvImageWidth) <= 1)
+                && (Math.abs(srcImageHeight - cnvImageHeight) <= 1);
+
+        boolean tmpIsImageWiderThanArea = (srcImageWidth > imageViewDesiredWidth + 0.5);
+        boolean tmpIsImageHigherThanArea = (srcImageHeight > imageViewDesiredHeight + 0.5);
+
+        if (imagesHaveSameSize)
+        {
+            if (isImageWiderThanArea != tmpIsImageWiderThanArea
+                    || isImageHigherThanArea != tmpIsImageHigherThanArea)
+            {
+                maximizeToggleButton.setDisable(!tmpIsImageWiderThanArea && !tmpIsImageHigherThanArea);
+            }
+
+            if (isImageWiderThanArea != tmpIsImageWiderThanArea)
+            {
+                isImageWiderThanArea = tmpIsImageWiderThanArea;
+                horizontalScrollValue = 0;
+            }
+
+            if (isImageHigherThanArea != tmpIsImageHigherThanArea)
+            {
+                isImageHigherThanArea = tmpIsImageHigherThanArea;
+                verticalScrollValue = 0;
+            }
+
+            horizontalScrollBar.setVisible(useImageOriginalSize && isImageWiderThanArea && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst));
+            verticalScrollBar.setVisible(useImageOriginalSize && isImageHigherThanArea && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst));
+        }
+        else
+        {
+            isImageWiderThanArea = false;
+            isImageHigherThanArea = false;
+            horizontalScrollValue = 0;
+            verticalScrollValue = 0;
+            horizontalScrollBar.setVisible(false);
+            verticalScrollBar.setVisible(false);
+            maximizeToggleButton.setDisable(true);
+        }
+
+        double viewportPoxX = isImageWiderThanArea ? horizontalScrollValue : 0;
+        double viewportPoxY = isImageHigherThanArea ? verticalScrollValue : 0;
+        double viewportWidth = isImageWiderThanArea ? imageViewDesiredWidth : srcImageWidth;
+        double viewportHeight = isImageHigherThanArea ? imageViewDesiredHeight : srcImageHeight;
+
+        if (imagesHaveSameSize)
+        {
+            horizontalScrollBar.setMin(0);
+            horizontalScrollBar.setMax(srcImageWidth - viewportWidth);
+            horizontalScrollBar.setVisibleAmount((viewportWidth / srcImageWidth)*(srcImageWidth - viewportWidth));
+            horizontalScrollBar.setBlockIncrement(viewportWidth/1.7);
+            horizontalScrollBar.setUnitIncrement(viewportWidth/5);
+
+            verticalScrollBar.setMin(0);
+            verticalScrollBar.setMax(srcImageHeight - viewportHeight);
+            verticalScrollBar.setVisibleAmount((viewportHeight / srcImageHeight)*(srcImageHeight - viewportHeight));
+            verticalScrollBar.setBlockIncrement(viewportHeight/1.7);
+            verticalScrollBar.setUnitIncrement(viewportHeight/5);
+        }
+
+        sourceImageView.setFitWidth(Math.min(imageViewDesiredWidth, srcImageWidth));
+        sourceImageView.setFitHeight(Math.min(imageViewDesiredHeight, srcImageHeight));
+        convertedImageView.setFitWidth(Math.min(imageViewDesiredWidth, cnvImageWidth));
+        convertedImageView.setFitHeight(Math.min(imageViewDesiredHeight, cnvImageHeight));
+
+        if (imagesHaveSameSize && useImageOriginalSize && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst) && (isImageWiderThanArea || isImageHigherThanArea))
+        {
+            sourceImageView.setViewport(new Rectangle2D(viewportPoxX, viewportPoxY, viewportWidth, viewportHeight));
+            convertedImageView.setViewport(new Rectangle2D(viewportPoxX, viewportPoxY, viewportWidth, viewportHeight));
+        }
+        else
+        {
+            sourceImageView.setViewport(new Rectangle2D(0, 0, srcImageWidth, srcImageHeight));
+            convertedImageView.setViewport(new Rectangle2D(0, 0, cnvImageWidth, cnvImageHeight));
+        }
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -564,6 +681,12 @@ public class ConverterWindowController
         }
     }
 
+    public void onToggleMaximize()
+    {
+        boolean maximized = maximizeToggleButton.isSelected();
+
+    }
+
     public void onSaveButtonClick(ActionEvent actionEvent)
     {
         Node eventTarget = (Node)actionEvent.getTarget();
@@ -579,9 +702,5 @@ public class ConverterWindowController
                 saveDirectory(eventWindow);
             }
         }
-    }
-
-    public void onToggleMaximize()
-    {
     }
 }

@@ -24,7 +24,7 @@
             <Button fx:id="nextButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onNextImageButtonClick" text="&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
             <Button fx:id="lastButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onLastImageButtonClick" text="&#x2b9e;&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
             <Button fx:id="saveButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onSaveButtonClick" text="&#x1F4BE;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
-            <!--<ToggleButton fx:id="maximizeToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onToggleMaximize" text="&#x1F50D;" textAlignment="CENTER"><font><Font size="15"/></font></ToggleButton>-->
+            <ToggleButton fx:id="maximizeToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onToggleMaximize" text="&#x1F50D;" textAlignment="CENTER"><font><Font size="15"/></font></ToggleButton>
         </FlowPane>
     </top>
 
@@ -48,4 +48,16 @@
         </HBox>
     </center>
 
+    <right>
+        <ScrollBar fx:id="verticalScrollBar" orientation="VERTICAL"
+                minWidth="0" maxWidth="20" prefWidth="20"
+        />
+    </right>
+
+    <bottom>
+        <ScrollBar fx:id="horizontalScrollBar" orientation="HORIZONTAL"
+                   minHeight="0" maxHeight="20" prefHeight="20" >
+            <BorderPane.margin><Insets right="20" /></BorderPane.margin>
+        </ScrollBar>
+    </bottom>
 </BorderPane>
