@@ -21,7 +21,7 @@ public class ImageConverter
     // gif, jfif, pbm, pgm: conversion tested and not supported
     // other formats have not been tested (probably not supported)
     private static final String[] inputSupportedTypes = { "png", "bmp", "jpg", "jpeg", "tif", "ppm", "pnm", "webp" };
-    private static final String[] outputSupportedTypes = { "png", "bmp", "jpg", "jpeg", "tif", "ppm", "pnm", "webp" };
+    private static final String[] outputSupportedTypes = { "png", "bmp", "jpg", "jpeg", "ppm", "pnm" };
     private static final String[] inputFileFilters; // initialized in static constructor
     private static final String[] outputFileFilters; // initialized in static constructor
 
