@@ -188,9 +188,11 @@ public class ImageConverter
         System.out.println("vChannelDividedLowBlur min = " + vChannelDividedLowBlurMinMax.minVal);
         System.out.println("vChannelDividedLowBlur max = " + vChannelDividedLowBlurMinMax.maxVal);
 
+        // subtract the low blurred image minimum and apply a threshold to zero to negative values to
+        // correct some noise in the lower values of the image
         Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
         Core.subtract(vChannelDivided_0_255, new Scalar(vChannelDividedLowBlurMinMax.minVal), vChannelNew);
-        // TODO: threshold to transform negative values to 0
+        Imgproc.threshold(vChannelNew, vChannelNew, 0, 0, Imgproc.THRESH_TOZERO);
         Core.MinMaxLocResult vChannelNewMinMax = Core.minMaxLoc(vChannelNew);
         System.out.println("vChannelNew min = " + vChannelNewMinMax.minVal);
         System.out.println("vChannelNew max = " + vChannelNewMinMax.maxVal);
