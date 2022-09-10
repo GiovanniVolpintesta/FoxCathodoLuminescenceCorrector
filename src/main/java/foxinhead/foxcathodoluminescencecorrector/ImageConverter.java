@@ -93,13 +93,13 @@ public class ImageConverter
 
     private static ByteArrayInputStream internalConvertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType)
     {
-        Mat sourceMatrix = Imgcodecs.imread(srcImageFileName);
-        Mat destMatrix = ConvertMat(sourceMatrix, conversionType);
+        Mat m = Imgcodecs.imread(srcImageFileName);
+        m = ConvertMat(m, conversionType);
         MatOfByte encodedImageBytes = new MatOfByte();
         ByteArrayInputStream inputStream = null;
         try
         {
-            Imgcodecs.imencode("." + outputType, destMatrix, encodedImageBytes);
+            Imgcodecs.imencode("." + outputType, m, encodedImageBytes);
             inputStream = new ByteArrayInputStream(encodedImageBytes.toArray());
         }
         catch (CvException e)
@@ -108,6 +108,10 @@ public class ImageConverter
             // the file cannot be read
             encodedImageBytes = new MatOfByte();
             inputStream = null;
+        }
+        finally
+        {
+            m.release();
         }
         return inputStream;
     }
