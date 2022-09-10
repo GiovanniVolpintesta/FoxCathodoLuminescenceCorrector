@@ -169,6 +169,10 @@ public class ImageConverter
 
         // Result of Brightness
         Mat vChannelDivided = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        // Add 1 to the whole image to avoid divisions with 0 (which produce a NaN result).
+        // This does not introduce a problem, because the image is in 0-255 range
+        // and the result is remapped in 0-255 range later.
+        Core.add(blurred, new Scalar(1.0), blurred);
         Core.divide(vChannel, blurred, vChannelDivided);
         Core.MinMaxLocResult vChannelDividedMinMax = Core.minMaxLoc(vChannelDivided);
         System.out.println("vChannelDivided min = " + vChannelDividedMinMax.minVal);
