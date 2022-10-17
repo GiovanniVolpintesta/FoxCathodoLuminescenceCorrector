@@ -5,8 +5,6 @@
       <element id="archive" name="FoxCathodoLuminescenceCorrector.jar">
         <element id="module-output" name="FoxCathodoLuminescenceCorrector" />
       </element>
-      <element id="library" level="application" name="openjfx-sdk-17.0.1" />
-      <element id="library" level="application" name="opencv-4.4.0" />
     </root>
   </artifact>
 </component>
