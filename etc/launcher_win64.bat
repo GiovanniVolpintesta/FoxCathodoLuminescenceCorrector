@@ -8,12 +8,12 @@ set CURRENT_DIRECTORY_BKP=%CD%
 set CURRENT_BATCH_FILE_PATH=%~dp0
 cd %CURRENT_BATCH_FILE_PATH%
 
-set USE_CUSTOM_RUNTIME_IMAGE=0
+set USE_CUSTOM_RUNTIME_IMAGE=1
 
 :: Path of the java binary files.
 :: Used if USE_CUSTOM_RUNTIME_IMAGE is 1.
-set CUSTOM_RUNTIME_IMAGE_PATH=".\minimal_jre\bin"
-set CUSTOM_RUNTIME_IMAGE_LIB_PATH=".\minimal_jre\lib"
+set CUSTOM_RUNTIME_IMAGE_BIN_PATH=".\java_runtime\bin"
+set CUSTOM_RUNTIME_IMAGE_LIB_PATH=".\java_runtime\lib"
 
 :: Path of the java binary files.
 :: Used if USE_CUSTOM_RUNTIME_IMAGE is not 1.
@@ -41,16 +41,16 @@ set PROGRAM_JAR_PATH=".\FoxCathodoLuminescenceCorrector.jar"
 :: So, both the program and the OpenCV modules are added indipendently to the paths.
 
 :: Set java binaries path, containing java execurtables (.exe files, with their dependency .dll files)
-if USE_CUSTOM_RUNTIME_IMAGE==1 (set JAVA_PATH=%CUSTOM_RUNTIME_IMAGE_PATH%) ^
+if %USE_CUSTOM_RUNTIME_IMAGE%==1 (set JAVA_PATH=%CUSTOM_RUNTIME_IMAGE_BIN_PATH%) ^
 else (set JAVA_PATH=%JAVA_NATIVE_LIBRARIES_PATH%)
 
 :: Set module path, containing dependency libs (.class, .jar, .jmod files)
-if USE_CUSTOM_RUNTIME_IMAGE==1 (set MODULE_PATH=%CUSTOM_RUNTIME_IMAGE_LIB_PATH%) ^
+if %USE_CUSTOM_RUNTIME_IMAGE%==1 (set MODULE_PATH=%CUSTOM_RUNTIME_IMAGE_LIB_PATH%) ^
 else (set MODULE_PATH=%JAVA_LIB_PATH%;%JAVAFX_LIB_PATH%)
 set MODULE_PATH=%MODULE_PATH%;%OPENCV_JAR_PATH%;%PROGRAM_JAR_PATH%
 
 :: Set library path, containing dependency native libraries (.dll files)
-if USE_CUSTOM_RUNTIME_IMAGE==1 (set JAVA_LIBRARY_PATH=%CUSTOM_RUNTIME_IMAGE_PATH%) ^
+if %USE_CUSTOM_RUNTIME_IMAGE%==1 (set JAVA_LIBRARY_PATH=%CUSTOM_RUNTIME_IMAGE_BIN_PATH%) ^
 else (set JAVA_LIBRARY_PATH=%JAVA_NATIVE_LIBRARIES_PATH%;%JAVAFX_NATIVE_LIBRARIES_PATH%)
 set JAVA_LIBRARY_PATH=%JAVA_LIBRARY_PATH%;%OPENCV_NATIVE_LIBRARY_DIR%
 
