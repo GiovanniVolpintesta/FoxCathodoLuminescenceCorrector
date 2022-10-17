@@ -20,9 +20,9 @@ import java.util.*;
 
 public class ConverterWindowController
 {
-    private static final String defaultSrcImagePath = ".\\images\\default_src_image.png";
-    private static final String defaultDstImagePath = ".\\images\\default_dst_image.png";
-    private static final String brokenFileImagePath = ".\\images\\broken_file.png";
+    private static final String defaultSrcImageResourceName = "/icons/default_src_image.png";
+    private static final String defaultDstImageResourceName = "/icons/default_dst_image.png";
+    private static final String brokenFileImageResourceName = "/icons/broken_file.png";
     private static final String previewImageType = "png";
 
     @FXML private Pane mainPane;
@@ -189,12 +189,12 @@ public class ConverterWindowController
         if (srcImageInputStream == null)
         {
             isBrokenOrEmptySrc = true;
-            srcImageInputStream = new FileInputStream(fileManager.getFilesCount() > 0 ? brokenFileImagePath : defaultSrcImagePath);
+            srcImageInputStream = getClass().getResourceAsStream(fileManager.getFilesCount() > 0 ? brokenFileImageResourceName : defaultSrcImageResourceName);
         }
         if (dstImageInputStream == null)
         {
             isBrokenOrEmptyDst = true;
-            dstImageInputStream = new FileInputStream(fileManager.getFilesCount() > 0 ? brokenFileImagePath : defaultDstImagePath);
+            dstImageInputStream = getClass().getResourceAsStream(fileManager.getFilesCount() > 0 ? brokenFileImageResourceName : defaultDstImageResourceName);
         }
 
         Image sourceImage = new Image(srcImageInputStream);
