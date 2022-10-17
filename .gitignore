@@ -25,5 +25,14 @@ hs_err_pid*
 # All compiled files (including fxml)
 target/*
 
+#All IntelliJ outputs (artifacts, etc.)
+out/*
+
+#All custom built files
+build/*
+
 # Libraries downloaded from Maven (to avoid license problems caused by redistribution)
 .idea/libraries/*
+
+#Notepad++ backup files
+*.bak
