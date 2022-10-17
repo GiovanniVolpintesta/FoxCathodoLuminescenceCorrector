@@ -1,13 +1,21 @@
 jdeps commands
-set PATH=%PATH%;C:\Program Files\Java\jdk-17.0.1\bin
+set PATH=%PATH%;"C:\Program Files\Java\openjdk-18.0.2.1\bin"
 D:
 cd Users\giova\IntelliJ\FoxImageConverter\out\artifacts\FoxImageConverterJar
 
 
 
 Creare Runtime Image minima:
-jlink --output MinimamRuntimeImage --module-path .;"C:\Program Files\Java\javafx-sdk-17.0.1\jmods";"C:\Program Files\Java\jdk-17.0.1\jmods" --add-modules java.base,javafx.controls,javafx.fxml
-jlink --no-header-files --no-man-pages --compress=2 --strip-debug --output MinimamRuntimeImage --module-path .;"C:\Program Files\Java\javafx-sdk-17.0.1\jmods";"C:\Program Files\Java\jdk-17.0.1\jmods" --add-modules java.base,javafx.controls,javafx.fxml
+
+jlink --output MinimamRuntimeImage ^
+--module-path .;"C:\Program Files\Java\javafx-sdk-17.0.1\jmods";"C:\Program Files\Java\openjdk-18.0.2.1\jmods" ^
+--add-modules java.base,javafx.controls,javafx.fxml
+
+jlink --no-header-files --no-man-pages --compress=2 --strip-debug --output MinimamRuntimeImage ^
+--module-path .;"C:\Program Files\Java\javafx-sdk-17.0.1\jmods";"C:\Program Files\Java\openjdk-18.0.2.1\jmods" ^
+--add-modules java.base,javafx.controls,javafx.fxml
+
+
 
 List moduli Runtime Image minima:
 MinimamRuntimeImage\bin\java.exe --list-modules
