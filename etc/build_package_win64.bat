@@ -93,5 +93,11 @@ set DEPENDENCY_MODULES_LIST=%DEPENDENCY_MODULES_LIST:opencv,=%
 :: remove temp dir
 rmdir /S /Q temp
 
+cd %CUSTOM_JAVA_RUNTIME_DIR%\lib
+del /F /Q jrt-fs.jar
+
 :: return to the old current directory
 cd %CURRENT_DIRECTORY_BKP%
+
+echo Build finished (see logs above).
+set /p TEMP_INPUT_KEY=Hit ENTER to continue...
