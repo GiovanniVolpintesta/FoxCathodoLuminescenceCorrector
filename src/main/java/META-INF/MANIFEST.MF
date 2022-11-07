@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Main-Class: foxinhead.foxcathodoluminescencecorrector.ConverterApplication
-Class-Path: javafx-base-17.0.1-win.jar javafx-graphics-17.0.1-win.jar op
- encv-455.jar javafx-fxml-17.0.1.jar javafx-controls-17.0.1-win.jar java
- fx-controls-17.0.1.jar javafx-base-17.0.1.jar javafx-fxml-17.0.1-win.ja
- r javafx-graphics-17.0.1.jar
+Main-Class: foxinhead.foxcathodoluminescencecorrector.ConverterApplicati
+ on
+Class-Path: javafx-swt.jar javafx.web.jar javafx.base.jar javafx.fxml.ja
+ r javafx.media.jar javafx.swing.jar javafx.controls.jar javafx.graphics
+ .jar opencv-440.jar
 
