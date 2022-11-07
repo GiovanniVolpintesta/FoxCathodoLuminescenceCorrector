@@ -23,6 +23,7 @@ public class ConverterWindowController
     private static final String defaultSrcImageResourceName = "/icons/default_src_image.png";
     private static final String defaultDstImageResourceName = "/icons/default_dst_image.png";
     private static final String brokenFileImageResourceName = "/icons/broken_file.png";
+    private static final String automaticPreviewButtonIconResourceName = "/icons/preview_button_icon.png";
     private static final String previewImageType = "png";
 
     @FXML private Pane mainPane;
@@ -37,6 +38,8 @@ public class ConverterWindowController
     @FXML private Button lastButton;
     @FXML private ToggleButton maximizeToggleButton;
     @FXML private Button saveButton;
+    @FXML private ToggleButton automaticPreviewButton;
+    @FXML public ImageView automaticPreviewButtonImageView;
 
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
@@ -51,6 +54,8 @@ public class ConverterWindowController
     private boolean useImageOriginalSize = false;
     private double horizontalScrollValue = 0;
     private double verticalScrollValue = 0;
+
+    private boolean automaticPreviewActivated = false;
 
     public static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
 
@@ -89,6 +94,18 @@ public class ConverterWindowController
                 verticalScrollBar.setValue(0);
             }
         });
+        automaticPreviewButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            assert(oldValue == automaticPreviewActivated);
+            if (automaticPreviewActivated != newValue)
+            {
+                automaticPreviewActivated = newValue;
+                try
+                {
+                    setCurrentFileIndex(currentFileIndex); // refresh images
+                } catch (IOException e) { throw new RuntimeException(e); }
+            }
+        });
 
         double minWidth = mainPane.getMinWidth();
         double minHeight = mainPane.getMinHeight();
@@ -108,6 +125,11 @@ public class ConverterWindowController
         verticalScrollBar.setVisible(false);
         maximizeToggleButton.setSelected(false);
         maximizeToggleButton.setDisable(true);
+        automaticPreviewButton.setDisable(false);
+        automaticPreviewButton.setSelected(false);
+
+        InputStream automaticPreviewButtonImageStream = getClass().getResourceAsStream(automaticPreviewButtonIconResourceName);
+        automaticPreviewButtonImageView.setImage(automaticPreviewButtonImageStream != null ? new Image(automaticPreviewButtonImageStream) : null);
 
         setupFilesCollection(fileManager.getWorkingDirectory());
     }
@@ -168,7 +190,10 @@ public class ConverterWindowController
                 // the saved image (the image will be converted again at save time), neither the one of the source
                 // image. Its purpose is just to allow the java UI to work correctly.
                 srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType);
-                dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType, previewImageType);
+                if (automaticPreviewActivated)
+                {
+                    dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType, previewImageType);
+                }
             }
             catch (IllegalArgumentException e)
             {
@@ -194,7 +219,7 @@ public class ConverterWindowController
         if (dstImageInputStream == null)
         {
             isBrokenOrEmptyDst = true;
-            dstImageInputStream = getClass().getResourceAsStream(fileManager.getFilesCount() > 0 ? brokenFileImageResourceName : defaultDstImageResourceName);
+            dstImageInputStream = getClass().getResourceAsStream((automaticPreviewActivated && fileManager.getFilesCount() > 0) ? brokenFileImageResourceName : defaultDstImageResourceName);
         }
 
         Image sourceImage = new Image(srcImageInputStream);
@@ -681,12 +706,6 @@ public class ConverterWindowController
         }
     }
 
-    public void onToggleMaximize()
-    {
-        boolean maximized = maximizeToggleButton.isSelected();
-
-    }
-
     public void onSaveButtonClick(ActionEvent actionEvent)
     {
         Node eventTarget = (Node)actionEvent.getTarget();
@@ -703,4 +722,5 @@ public class ConverterWindowController
             }
         }
     }
+
 }
