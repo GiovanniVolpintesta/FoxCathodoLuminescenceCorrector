@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="foxinhead.foxcathodoluminescencecorrector.ConverterWindowController"
+            prefWidth="600.0" prefHeight="400.0">
+
+    <GridPane BorderPane.alignment="CENTER" >
+        <ImageView fx:id="sourceImageView" preserveRatio="true"
+                   GridPane.rowIndex="0" GridPane.columnIndex="0"
+                   GridPane.halignment="CENTER" GridPane.valignment="CENTER"
+                   GridPane.fillWidth="true" GridPane.fillHeight="true"
+        />
+        <ImageView fx:id="convertedImageView" preserveRatio="true"
+                   GridPane.rowIndex="0" GridPane.columnIndex="1"
+                   GridPane.halignment="CENTER" GridPane.valignment="CENTER"
+                   GridPane.fillWidth="true" GridPane.fillHeight="true"
+        />
+    </GridPane>
+
+    <HBox BorderPane.alignment="TOP_LEFT" >
+        <Button text="Choose image" onAction="#onOpenFileButtonClick"
+                prefWidth="100" prefHeight="30"
+                minWidth="100" minHeight="30"
+                textAlignment="CENTER"
+        />
+        <Button text="Choose directory" onAction="#onOpenDirectoryButtonClick"
+                prefWidth="150" prefHeight="30"
+                minWidth="150" minHeight="30"
+                textAlignment="CENTER"
+        />
+        <Button fx:id="previousButton" text="Prev" onAction="#onPreviousImageButtonClick"
+                prefWidth="100" prefHeight="30"
+                minWidth="100" minHeight="30"
+                textAlignment="CENTER"
+        />
+        <Button fx:id="nextButton" text="Next" onAction="#onNextImageButtonClick"
+                prefWidth="100" prefHeight="30"
+                minWidth="100" minHeight="30"
+                textAlignment="CENTER"
+        />
+        <Button fx:id="saveButton" text="Save" onAction="#onSaveButtonClick"
+                prefWidth="100" prefHeight="30"
+                minWidth="100" minHeight="30"
+                textAlignment="CENTER"
+        />
+    </HBox>
+
+</BorderPane>
