@@ -7,6 +7,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
+import java.util.Map;
 
 public class ImageConverter
 {
@@ -16,6 +17,12 @@ public class ImageConverter
         , GREYSCALE
         , CATHODO_LUMINESCENCE_CORRECTION
         , BLURRED_FILTER
+    }
+
+    public enum ConversionParameter
+    {
+        NONE
+        , PARAM_SIGMA
     }
 
     // png, bmp, jpg, jpeg, webp, tif, ppm, pnm: conversion supported
@@ -75,16 +82,16 @@ public class ImageConverter
         return false;
     }
 
-    public static ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType)
+    public static ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, Map<ConversionParameter, String> params)
     {
-        return internalConvertImageInMemory(srcImageFileName, conversionType, defaultOutputType);
+        return internalConvertImageInMemory(srcImageFileName, conversionType, defaultOutputType, params);
     }
 
-    public static ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType) throws IllegalArgumentException
+    public static ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType, Map<ConversionParameter, String> params) throws IllegalArgumentException
     {
         if (isTypeSupportedAsOutput(outputType))
         {
-            return internalConvertImageInMemory(srcImageFileName, conversionType, outputType);
+            return internalConvertImageInMemory(srcImageFileName, conversionType, outputType, params);
         }
         else
         {
@@ -92,10 +99,10 @@ public class ImageConverter
         }
     }
 
-    private static ByteArrayInputStream internalConvertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType)
+    private static ByteArrayInputStream internalConvertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType, Map<ConversionParameter, String> params)
     {
         Mat m = Imgcodecs.imread(srcImageFileName);
-        m = ConvertMat(m, conversionType);
+        m = ConvertMat(m, conversionType, params);
         MatOfByte encodedImageBytes = new MatOfByte();
         ByteArrayInputStream inputStream = null;
         try
@@ -117,16 +124,18 @@ public class ImageConverter
         return inputStream;
     }
 
-    private static Mat ConvertMat (Mat source, ConversionType conversionType)
+    private static Mat ConvertMat (Mat source, ConversionType conversionType, Map<ConversionParameter, String> params)
     {
+        double sigma = params.containsKey(ConversionParameter.PARAM_SIGMA) ? Double.parseDouble(params.get(ConversionParameter.PARAM_SIGMA)) : 0.0;
+
         switch (conversionType)
         {
             case GREYSCALE:
                 return ConvertToGreyScale(source);
             case CATHODO_LUMINESCENCE_CORRECTION:
-                return PerformCathodoLuminescenceCorrection(source, 1.0/5.0);
+                return PerformCathodoLuminescenceCorrection(source, sigma);
             case BLURRED_FILTER:
-                return PerformCathodoLuminescenceCorrectionBlur(source, 1.0/5.0);
+                return PerformCathodoLuminescenceCorrectionBlur(source, sigma);
             case NONE:
             default:
                 Mat dest = Mat.zeros(source.rows(), source.cols(), source.type());
