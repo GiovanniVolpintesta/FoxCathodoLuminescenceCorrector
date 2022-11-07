@@ -20,11 +20,20 @@ import java.util.*;
 
 public class ConverterWindowController
 {
+    enum PreviewType {
+        NONE
+        , CONVERSION_RESULT
+        , BLURRED_FILTER
+    }
+
     private static final String defaultSrcImageResourceName = "/icons/default_src_image.png";
     private static final String defaultDstImageResourceName = "/icons/default_dst_image.png";
     private static final String brokenFileImageResourceName = "/icons/broken_file.png";
-    private static final String automaticPreviewButtonIconResourceName = "/icons/preview_button_icon.png";
+    private static final String previewConversionIconResourceName = "/icons/preview_conversion_button_icon.png";
+    private static final String previewBlurIconResourceName = "/icons/preview_blur_icon.png";
     private static final String previewImageType = "png";
+
+    private static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
 
     @FXML private Pane mainPane;
     @FXML private HBox imagesPane;
@@ -38,8 +47,12 @@ public class ConverterWindowController
     @FXML private Button lastButton;
     @FXML private ToggleButton maximizeToggleButton;
     @FXML private Button saveButton;
-    @FXML private ToggleButton automaticPreviewButton;
-    @FXML public ImageView automaticPreviewButtonImageView;
+
+    @FXML private ToggleButton previewConversionToggleButton;
+    @FXML public ImageView previewConversionToggleButtonImageView;
+
+    @FXML public ToggleButton previewBlurToggleButton;
+    @FXML public ImageView previewBlurToggleButtonImageView;
 
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
@@ -55,9 +68,8 @@ public class ConverterWindowController
     private double horizontalScrollValue = 0;
     private double verticalScrollValue = 0;
 
-    private boolean automaticPreviewActivated = false;
-
-    public static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
+    private PreviewType previewType = PreviewType.NONE;
+    private boolean refreshingPreview = false; // recursion check
 
     public ConverterWindowController ()
     {
@@ -94,17 +106,13 @@ public class ConverterWindowController
                 verticalScrollBar.setValue(0);
             }
         });
-        automaticPreviewButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        previewConversionToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
         {
-            assert(oldValue == automaticPreviewActivated);
-            if (automaticPreviewActivated != newValue)
-            {
-                automaticPreviewActivated = newValue;
-                try
-                {
-                    setCurrentFileIndex(currentFileIndex); // refresh images
-                } catch (IOException e) { throw new RuntimeException(e); }
-            }
+            refreshPreview(newValue ? PreviewType.CONVERSION_RESULT : PreviewType.NONE);
+        });
+        previewBlurToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            refreshPreview(newValue ? PreviewType.BLURRED_FILTER : PreviewType.NONE);
         });
 
         double minWidth = mainPane.getMinWidth();
@@ -123,15 +131,22 @@ public class ConverterWindowController
         verticalScrollValue = 0;
         horizontalScrollBar.setVisible(false);
         verticalScrollBar.setVisible(false);
+
+        InputStream previewConversionButtonImageStream = getClass().getResourceAsStream(previewConversionIconResourceName);
+        previewConversionToggleButtonImageView.setImage(previewConversionButtonImageStream != null ? new Image(previewConversionButtonImageStream) : null);
+
+        InputStream previewBlurButtonImageStream = getClass().getResourceAsStream(previewBlurIconResourceName);
+        previewBlurToggleButtonImageView.setImage(previewBlurButtonImageStream != null ? new Image(previewBlurButtonImageStream) : null);
+
+        previewConversionToggleButton.setDisable(false);
+        previewBlurToggleButton.setDisable(false);
+
         maximizeToggleButton.setSelected(false);
         maximizeToggleButton.setDisable(true);
-        automaticPreviewButton.setDisable(false);
-        automaticPreviewButton.setSelected(false);
-
-        InputStream automaticPreviewButtonImageStream = getClass().getResourceAsStream(automaticPreviewButtonIconResourceName);
-        automaticPreviewButtonImageView.setImage(automaticPreviewButtonImageStream != null ? new Image(automaticPreviewButtonImageStream) : null);
 
         setupFilesCollection(fileManager.getWorkingDirectory());
+
+        refreshPreview(PreviewType.NONE); // refresh preview images
     }
 
     public void onOpenFileButtonClick(ActionEvent actionEvent) throws IOException
@@ -184,15 +199,24 @@ public class ConverterWindowController
         {
             currentFileIndex = index;
             File currentFile = fileManager.getFileAtIndex(currentFileIndex);
+
+            ImageConverter.ConversionType previewConversionType = ImageConverter.ConversionType.NONE;
+            switch(previewType)
+            {
+                case CONVERSION_RESULT -> previewConversionType = conversionType;
+                case BLURRED_FILTER -> previewConversionType = ImageConverter.ConversionType.BLURRED_FILTER;
+                case NONE -> previewConversionType = ImageConverter.ConversionType.NONE;
+            }
+
             try
             {
                 // use a preview type here because the image is only shown in UI. This type is not the one of
                 // the saved image (the image will be converted again at save time), neither the one of the source
                 // image. Its purpose is just to allow the java UI to work correctly.
                 srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType);
-                if (automaticPreviewActivated)
+                if (previewType != PreviewType.NONE)
                 {
-                    dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType, previewImageType);
+                    dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, previewConversionType, previewImageType);
                 }
             }
             catch (IllegalArgumentException e)
@@ -219,7 +243,7 @@ public class ConverterWindowController
         if (dstImageInputStream == null)
         {
             isBrokenOrEmptyDst = true;
-            dstImageInputStream = getClass().getResourceAsStream((automaticPreviewActivated && fileManager.getFilesCount() > 0) ? brokenFileImageResourceName : defaultDstImageResourceName);
+            dstImageInputStream = getClass().getResourceAsStream((previewType != PreviewType.NONE && fileManager.getFilesCount() > 0) ? brokenFileImageResourceName : defaultDstImageResourceName);
         }
 
         Image sourceImage = new Image(srcImageInputStream);
@@ -720,6 +744,25 @@ public class ConverterWindowController
             {
                 saveDirectory(eventWindow);
             }
+        }
+    }
+
+    void refreshPreview(PreviewType newPreviewType)
+    {
+        if (!refreshingPreview)
+        {
+            refreshingPreview = true;
+
+            previewConversionToggleButton.setSelected(newPreviewType == PreviewType.CONVERSION_RESULT);
+            previewBlurToggleButton.setSelected(newPreviewType == PreviewType.BLURRED_FILTER);
+
+            previewType = newPreviewType;
+            try
+            {
+                setCurrentFileIndex(currentFileIndex); // refresh images
+            } catch (IOException e) { throw new RuntimeException(e); }
+
+            refreshingPreview = false;
         }
     }
 

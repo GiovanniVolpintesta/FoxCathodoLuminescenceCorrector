@@ -25,8 +25,13 @@
             <Button fx:id="lastButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onLastImageButtonClick" text="&#x2b9e;&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
             <Button fx:id="saveButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onSaveButtonClick" text="&#x1F4BE;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
 
-            <ToggleButton fx:id="automaticPreviewButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" textAlignment="CENTER">
-                <graphic><ImageView fx:id="automaticPreviewButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+            <ToggleButton fx:id="previewConversionToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" textAlignment="CENTER">
+                <graphic><ImageView fx:id="previewConversionToggleButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Activate to see the preview of the image."/></tooltip>
+            </ToggleButton>
+
+            <ToggleButton fx:id="previewBlurToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" textAlignment="CENTER">
+                <graphic><ImageView fx:id="previewBlurToggleButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
                 <tooltip><Tooltip text="Activate to see the preview of the image."/></tooltip>
             </ToggleButton>
 

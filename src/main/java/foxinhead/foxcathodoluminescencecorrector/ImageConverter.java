@@ -15,6 +15,7 @@ public class ImageConverter
         NONE
         , GREYSCALE
         , CATHODO_LUMINESCENCE_CORRECTION
+        , BLURRED_FILTER
     }
 
     // png, bmp, jpg, jpeg, webp, tif, ppm, pnm: conversion supported
@@ -123,7 +124,9 @@ public class ImageConverter
             case GREYSCALE:
                 return ConvertToGreyScale(source);
             case CATHODO_LUMINESCENCE_CORRECTION:
-                return PerformCathodoLuminescenceCorrection(source);
+                return PerformCathodoLuminescenceCorrection(source, 1.0/5.0);
+            case BLURRED_FILTER:
+                return PerformCathodoLuminescenceCorrectionBlur(source, 1.0/5.0);
             case NONE:
             default:
                 Mat dest = Mat.zeros(source.rows(), source.cols(), source.type());
@@ -140,7 +143,7 @@ public class ImageConverter
         return greyscaleMat;
     }
 
-    private static Mat PerformCathodoLuminescenceCorrection (Mat source)
+    private static Mat PerformCathodoLuminescenceCorrection (Mat source, double sigmaMultiplier)
     {
         int nRows = source.rows();
         int nCols = source.cols();
@@ -165,9 +168,7 @@ public class ImageConverter
         Core.MinMaxLocResult vChannelMinMax = Core.minMaxLoc(vChannel);
 
         // Apply gaussian blur with a big sigma that is dependent on the image size
-        double sigma1 = Math.min(nRows, nCols) / 5.0;
-        Mat blurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
+        Mat blurred = ComputeBlurredVChannel(vChannel, sigmaMultiplier);
 
         // Result of Brightness
         Mat vChannelDivided = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
@@ -253,5 +254,59 @@ public class ImageConverter
         //System.out.println("rgbResult: " + Arrays.toString(rgbResult.get(100, 100)));
 
         return result;
+    }
+
+    private static Mat PerformCathodoLuminescenceCorrectionBlur (Mat source, double sigmaMultiplier)
+    {
+        int nRows = source.rows();
+        int nCols = source.cols();
+
+        // Convert to three 32-bit float components ranging in [0-255]
+        Mat source32F = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        source.convertTo(source32F, CvType.CV_32FC3);
+
+        // Convert in HSV (ranging in [0-255])
+        Mat hsvMat = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
+        Imgproc.cvtColor(source32F, hsvMat, Imgproc.COLOR_RGB2HSV);
+        source32F.release();
+
+        // Extract v channel
+        Mat vChannel = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Core.extractChannel(hsvMat, vChannel, 2);
+        hsvMat.release();
+
+        // Apply gaussian blur with a big sigma that is dependent on the image size
+        vChannel = ComputeBlurredVChannel(vChannel, sigmaMultiplier);
+
+        // Remap the blur background in 0-255 range
+        Core.MinMaxLocResult vChannelNewMinMax = Core.minMaxLoc(vChannel);
+        Core.subtract(vChannel, new Scalar(vChannelNewMinMax.minVal), vChannel);
+        Core.multiply(vChannel, new Scalar(255.0 / (vChannelNewMinMax.maxVal - vChannelNewMinMax.minVal)), vChannel);
+
+        return vChannel;
+    }
+
+    /**
+     * Performs an image blurring using a radius that is dependent on the image size.
+     * The image must be a greyscale image represented with float pixels in the [0, 1] range.
+     * @param vChannel (Mat of type CvType.CV_32FC1)
+     * @param sigmaMultiplier Multiplier of the image size. The blur radius will be computed applying this multiplier to the image size.
+     * @return The blurred image (Mat of type CvType.CV_32FC1)
+     */
+    private static Mat ComputeBlurredVChannel (Mat vChannel, double sigmaMultiplier)
+    {
+        assert (vChannel.type() == CvType.CV_32FC1);
+
+        int nRows = vChannel.rows();
+        int nCols = vChannel.cols();
+
+        Core.MinMaxLocResult vChannelMinMax = Core.minMaxLoc(vChannel);
+
+        // Apply gaussian blur with a big sigma that is dependent on the image size
+        double sigma1 = Math.min(nRows, nCols) * sigmaMultiplier;
+        Mat blurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
+
+        return blurred;
     }
 }
