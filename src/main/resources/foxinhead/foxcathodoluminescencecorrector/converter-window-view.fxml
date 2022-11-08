@@ -49,13 +49,14 @@
                 </ToggleButton>
             </FlowPane>
 
-            <FlowPane minWidth="150" prefWidth="150" hgap="5" vgap="5">
-                <ImageView fx:id="blurRadiusPercentageImageView" fitWidth="35" preserveRatio="true"/>
+            <FlowPane minWidth="180" prefWidth="180" hgap="5" vgap="5">
                 <FlowPane.margin>
                     <Insets right="20" />
                 </FlowPane.margin>
                 <Slider fx:id="blurRadiusPercentageSlider" minWidth="100" prefWidth="100"
                         min="0" max="100" showTickLabels="true" showTickMarks="true" blockIncrement="10" majorTickUnit="50"/>
+                <ImageView fx:id="blurRadiusPercentageImageView" fitWidth="35" preserveRatio="true"/>
+                <Label fx:id="blurRadiusPercentageText" minWidth="30" prefWidth="30"/>
             </FlowPane>
 
         </FlowPane>

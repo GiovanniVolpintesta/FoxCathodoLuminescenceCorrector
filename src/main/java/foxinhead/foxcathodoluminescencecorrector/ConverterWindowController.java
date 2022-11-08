@@ -14,6 +14,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.util.StringConverter;
 
 import java.io.*;
 import java.util.*;
@@ -58,6 +59,7 @@ public class ConverterWindowController
 
     @FXML public ImageView blurRadiusPercentageImageView;
     @FXML public Slider blurRadiusPercentageSlider;
+    @FXML public Label blurRadiusPercentageText;
 
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
@@ -162,6 +164,10 @@ public class ConverterWindowController
         setupFilesCollection(fileManager.getWorkingDirectory());
 
         refreshPreview(PreviewType.NONE);
+        blurRadiusPercentageSlider.setLabelFormatter(new StringConverter<Double>() {
+            @Override public String toString(Double object) { return object.longValue() + "%"; }
+            @Override public Double fromString(String string) { return (double) Long.parseLong(string.substring(0, string.lastIndexOf("%"))); }
+        });
         blurRadiusPercentageSlider.setValue(blurSliderDefaultValue);
     }
 
@@ -799,6 +805,7 @@ public class ConverterWindowController
     void refreshBlurRadiusSize(double percentage)
     {
         blurFilterPercentage = percentage;
+        blurRadiusPercentageText.setText(Math.round(percentage * 100) + "%");
         refreshPreview(previewType);
     }
 }
