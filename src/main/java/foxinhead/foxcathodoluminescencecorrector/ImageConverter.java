@@ -23,6 +23,7 @@ public class ImageConverter
     {
         NONE
         , PARAM_SIGMA
+        , NOISE_REDUCTION_ACTIVATED
     }
 
     // png, bmp, jpg, jpeg, webp, tif, ppm, pnm: conversion supported
@@ -127,13 +128,14 @@ public class ImageConverter
     private static Mat ConvertMat (Mat source, ConversionType conversionType, Map<ConversionParameter, String> params)
     {
         double sigma = params.containsKey(ConversionParameter.PARAM_SIGMA) ? Double.parseDouble(params.get(ConversionParameter.PARAM_SIGMA)) : 0.0;
+        boolean performNoiseReduction = params.containsKey(ConversionParameter.NOISE_REDUCTION_ACTIVATED) && Boolean.parseBoolean(params.get(ConversionParameter.NOISE_REDUCTION_ACTIVATED));
 
         switch (conversionType)
         {
             case GREYSCALE:
                 return ConvertToGreyScale(source);
             case CATHODO_LUMINESCENCE_CORRECTION:
-                return PerformCathodoLuminescenceCorrection(source, sigma);
+                return PerformCathodoLuminescenceCorrection(source, sigma, performNoiseReduction);
             case BLURRED_FILTER:
                 return PerformCathodoLuminescenceCorrectionBlur(source, sigma);
             case NONE:
@@ -152,7 +154,7 @@ public class ImageConverter
         return greyscaleMat;
     }
 
-    private static Mat PerformCathodoLuminescenceCorrection (Mat source, double sigmaMultiplier)
+    private static Mat PerformCathodoLuminescenceCorrection (Mat source, double sigmaMultiplier, boolean performNoiseReduction)
     {
         int nRows = source.rows();
         int nCols = source.cols();
@@ -203,30 +205,43 @@ public class ImageConverter
         //System.out.println("vChannelDivided_0_255 min = " + vChannelDivided_0_255_MinMax.minVal);
         //System.out.println("vChannelDivided_0_255 max = " + vChannelDivided_0_255_MinMax.maxVal);
 
-        double sigma2 = 10;
-        // Filter minimo
-        Mat vChannelDividedLowBlur = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Imgproc.GaussianBlur(vChannelDivided_0_255, vChannelDividedLowBlur, new Size(0, 0), sigma2, sigma2, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
-        Core.MinMaxLocResult vChannelDividedLowBlurMinMax = Core.minMaxLoc(vChannelDividedLowBlur);
-        vChannelDividedLowBlur.release();
-        //System.out.println("vChannelDividedLowBlur min = " + vChannelDividedLowBlurMinMax.minVal);
-        //System.out.println("vChannelDividedLowBlur max = " + vChannelDividedLowBlurMinMax.maxVal);
+        Mat vChannelNew_0_255;
+        if (performNoiseReduction)
+        {
+            Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+            vChannelNew_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
 
-        // subtract the low blurred image minimum and apply a threshold to zero to negative values to
-        // correct some noise in the lower values of the image
-        Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Core.subtract(vChannelDivided_0_255, new Scalar(vChannelDividedLowBlurMinMax.minVal), vChannelNew);
-        vChannelDivided_0_255.release();
-        Imgproc.threshold(vChannelNew, vChannelNew, 0, 0, Imgproc.THRESH_TOZERO);
-        Core.MinMaxLocResult vChannelNewMinMax = Core.minMaxLoc(vChannelNew);
-        //System.out.println("vChannelNew min = " + vChannelNewMinMax.minVal);
-        //System.out.println("vChannelNew max = " + vChannelNewMinMax.maxVal);
-        Mat vChannelNew_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Core.multiply(vChannelNew, new Scalar(255.0 / (vChannelNewMinMax.maxVal - vChannelNewMinMax.minVal)), vChannelNew_0_255);
-        vChannelNew.release();
-        Core.MinMaxLocResult vChannelNew_0_255_MinMax = Core.minMaxLoc(vChannelNew_0_255);
-        //System.out.println("vChannelNew_0_255 min = " + vChannelNew_0_255_MinMax.minVal);
-        //System.out.println("vChannelNew_0_255 max = " + vChannelNew_0_255_MinMax.maxVal);
+            double sigma2 = 10;
+            // Filter minimo
+            Mat vChannelDividedLowBlur = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+            Imgproc.GaussianBlur(vChannelDivided_0_255, vChannelDividedLowBlur, new Size(0, 0), sigma2, sigma2, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
+            Core.MinMaxLocResult vChannelDividedLowBlurMinMax = Core.minMaxLoc(vChannelDividedLowBlur);
+            vChannelDividedLowBlur.release();
+            //System.out.println("vChannelDividedLowBlur min = " + vChannelDividedLowBlurMinMax.minVal);
+            //System.out.println("vChannelDividedLowBlur max = " + vChannelDividedLowBlurMinMax.maxVal);
+
+            // subtract the low blurred image minimum and apply a threshold to zero to negative values to
+            // correct some noise in the lower values of the image
+            Core.subtract(vChannelDivided_0_255, new Scalar(vChannelDividedLowBlurMinMax.minVal), vChannelNew);
+
+            Imgproc.threshold(vChannelNew, vChannelNew, 0, 0, Imgproc.THRESH_TOZERO);
+            Core.MinMaxLocResult vChannelNewMinMax = Core.minMaxLoc(vChannelNew);
+            //System.out.println("vChannelNew min = " + vChannelNewMinMax.minVal);
+            //System.out.println("vChannelNew max = " + vChannelNewMinMax.maxVal);
+
+            Core.multiply(vChannelNew, new Scalar(255.0 / (vChannelNewMinMax.maxVal - vChannelNewMinMax.minVal)), vChannelNew_0_255);
+            vChannelNew.release();
+            Core.MinMaxLocResult vChannelNew_0_255_MinMax = Core.minMaxLoc(vChannelNew_0_255);
+            //System.out.println("vChannelNew_0_255 min = " + vChannelNew_0_255_MinMax.minVal);
+            //System.out.println("vChannelNew_0_255 max = " + vChannelNew_0_255_MinMax.maxVal);
+
+            vChannelDivided_0_255.release();
+        }
+        else
+        {
+            vChannelNew_0_255 = vChannelDivided_0_255;
+            // Don't release vChannelDivided_0_255 yet, otherwise also vChannelNew_0_255 is released
+        }
 
         // recombine channels
         Mat hsvResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);

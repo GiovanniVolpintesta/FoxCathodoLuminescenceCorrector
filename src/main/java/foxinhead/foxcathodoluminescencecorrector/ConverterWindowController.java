@@ -21,6 +21,7 @@ import java.util.*;
 
 public class ConverterWindowController
 {
+
     enum PreviewType {
         NONE
         , CONVERSION_RESULT
@@ -33,6 +34,7 @@ public class ConverterWindowController
     private static final String previewConversionIconResourceName = "/icons/preview_conversion_button_icon.png";
     private static final String previewBlurIconResourceName = "/icons/preview_blur_icon.png";
     private static final String blurRadiusPercentageIconResourceName = "/icons/blur_radius_percentage_icon.png";
+    private static final String noiseReductionButtonIconResourceName = "/icons/noise_reduction_icon.png";
     private static final String previewImageType = "png";
 
     private static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
@@ -61,6 +63,10 @@ public class ConverterWindowController
     @FXML public Slider blurRadiusPercentageSlider;
     @FXML public Label blurRadiusPercentageText;
 
+    @FXML public ToggleButton noiseReductionToggleButton;
+    @FXML public ImageView noiseReductionToggleButtonImageView;
+    @FXML public Label noiseReductionToggleButtonLabel;
+
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
 
@@ -77,6 +83,8 @@ public class ConverterWindowController
 
     private PreviewType previewType = PreviewType.NONE;
     private boolean refreshingPreview = false; // recursion check
+
+    private boolean noiseReductionActivated = true;
 
     private double blurFilterPercentage = blurSliderDefaultValue / 100.0;
     public ConverterWindowController ()
@@ -124,6 +132,13 @@ public class ConverterWindowController
             refreshPreview(newValue ? PreviewType.BLURRED_FILTER : PreviewType.NONE);
         });
 
+        noiseReductionToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            noiseReductionActivated = newValue;
+            noiseReductionToggleButton.setText(noiseReductionActivated ? "\uD83D\uDDF9" : "\u2610");
+            refreshPreview(previewType);
+        });
+
         blurRadiusPercentageSlider.valueProperty().addListener((property, oldValue, newValue) ->
         {
             refreshBlurRadiusSize(Math.max(0.0, Math.min(100.0, (double)newValue)) / 100.0);
@@ -155,8 +170,12 @@ public class ConverterWindowController
         InputStream blurRadiusPercentageImageStream = getClass().getResourceAsStream(blurRadiusPercentageIconResourceName);
         blurRadiusPercentageImageView.setImage(blurRadiusPercentageImageStream != null ? new Image(blurRadiusPercentageImageStream) : null);
 
+        InputStream noiseReductionButtonImageStream = getClass().getResourceAsStream(noiseReductionButtonIconResourceName);
+        noiseReductionToggleButtonImageView.setImage(blurRadiusPercentageImageStream != null ? new Image(noiseReductionButtonImageStream) : null);
+
         previewConversionToggleButton.setDisable(false);
         previewBlurToggleButton.setDisable(false);
+        noiseReductionToggleButton.setDisable(false);
 
         maximizeToggleButton.setSelected(false);
         maximizeToggleButton.setDisable(true);
@@ -229,10 +248,12 @@ public class ConverterWindowController
                 case CONVERSION_RESULT:
                     previewConversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
                     break;
                 case BLURRED_FILTER:
                     previewConversionType = ImageConverter.ConversionType.BLURRED_FILTER;
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
                     break;
                 case NONE:
                 default:
@@ -791,6 +812,7 @@ public class ConverterWindowController
 
             previewConversionToggleButton.setSelected(newPreviewType == PreviewType.CONVERSION_RESULT);
             previewBlurToggleButton.setSelected(newPreviewType == PreviewType.BLURRED_FILTER);
+            noiseReductionToggleButton.setSelected(noiseReductionActivated);
 
             previewType = newPreviewType;
             try
