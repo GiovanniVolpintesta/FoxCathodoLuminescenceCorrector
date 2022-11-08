@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class FileManager
 {
@@ -71,27 +72,27 @@ public class FileManager
         }
     }
 
-    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType) throws IllegalArgumentException
+    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType, Map<ImageConverter.ConversionParameter, String> params) throws IllegalArgumentException
     {
         File file = getFileAtIndex(fileIndex);
         if (file != null && file.exists())
         {
-            return ImageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, outputType);
+            return ImageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, outputType, params);
         }
         return null;
     }
 
-    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType)
+    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params)
     {
         File file = getFileAtIndex(fileIndex);
         if (file != null)
         {
-            return ImageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType);
+            return ImageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, params);
         }
         return null;
     }
 
-    public void convertAndSaveFile (File srcFile, File dstFile, ImageConverter.ConversionType conversionType) throws IOException, IllegalArgumentException, UnsupportedEncodingException
+    public void convertAndSaveFile (File srcFile, File dstFile, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params) throws IOException, IllegalArgumentException, UnsupportedEncodingException
     {
         if (srcFile != null && dstFile != null
                 && !srcFile.isDirectory() && !dstFile.isDirectory())
@@ -101,7 +102,7 @@ public class FileManager
                 throw new UnsupportedEncodingException("The source file has not a supported encoding. Only the following encodings are supported: " + Arrays.toString(ImageConverter.getInputFileFilters()));
             }
 
-            InputStream convertedImage = ImageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile));
+            InputStream convertedImage = ImageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile), params);
             if (convertedImage == null || convertedImage.available() == 0)
             {
                 if (convertedImage != null)

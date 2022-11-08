@@ -14,16 +14,31 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.util.StringConverter;
 
 import java.io.*;
 import java.util.*;
 
 public class ConverterWindowController
 {
+
+    enum PreviewType {
+        NONE
+        , CONVERSION_RESULT
+        , BLURRED_FILTER
+    }
+
     private static final String defaultSrcImageResourceName = "/icons/default_src_image.png";
     private static final String defaultDstImageResourceName = "/icons/default_dst_image.png";
     private static final String brokenFileImageResourceName = "/icons/broken_file.png";
+    private static final String previewConversionIconResourceName = "/icons/preview_conversion_button_icon.png";
+    private static final String previewBlurIconResourceName = "/icons/preview_blur_icon.png";
+    private static final String blurRadiusPercentageIconResourceName = "/icons/blur_radius_percentage_icon.png";
+    private static final String noiseReductionButtonIconResourceName = "/icons/noise_reduction_icon.png";
     private static final String previewImageType = "png";
+
+    private static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
+    private static double blurSliderDefaultValue = 20;
 
     @FXML private Pane mainPane;
     @FXML private HBox imagesPane;
@@ -37,6 +52,20 @@ public class ConverterWindowController
     @FXML private Button lastButton;
     @FXML private ToggleButton maximizeToggleButton;
     @FXML private Button saveButton;
+
+    @FXML private ToggleButton previewConversionToggleButton;
+    @FXML public ImageView previewConversionToggleButtonImageView;
+
+    @FXML public ToggleButton previewBlurToggleButton;
+    @FXML public ImageView previewBlurToggleButtonImageView;
+
+    @FXML public ImageView blurRadiusPercentageImageView;
+    @FXML public Slider blurRadiusPercentageSlider;
+    @FXML public Label blurRadiusPercentageText;
+
+    @FXML public ToggleButton noiseReductionToggleButton;
+    @FXML public ImageView noiseReductionToggleButtonImageView;
+    @FXML public Label noiseReductionToggleButtonLabel;
 
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
@@ -52,8 +81,12 @@ public class ConverterWindowController
     private double horizontalScrollValue = 0;
     private double verticalScrollValue = 0;
 
-    public static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
+    private PreviewType previewType = PreviewType.NONE;
+    private boolean refreshingPreview = false; // recursion check
 
+    private boolean noiseReductionActivated = true;
+
+    private double blurFilterPercentage = blurSliderDefaultValue / 100.0;
     public ConverterWindowController ()
     {
         fileManager = new FileManager();
@@ -90,6 +123,27 @@ public class ConverterWindowController
             }
         });
 
+        previewConversionToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            refreshPreview(newValue ? PreviewType.CONVERSION_RESULT : PreviewType.NONE);
+        });
+        previewBlurToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            refreshPreview(newValue ? PreviewType.BLURRED_FILTER : PreviewType.NONE);
+        });
+
+        noiseReductionToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            noiseReductionActivated = newValue;
+            noiseReductionToggleButton.setText(noiseReductionActivated ? "\uD83D\uDDF9" : "\u2610");
+            refreshPreview(previewType);
+        });
+
+        blurRadiusPercentageSlider.valueProperty().addListener((property, oldValue, newValue) ->
+        {
+            refreshBlurRadiusSize(Math.max(0.0, Math.min(100.0, (double)newValue)) / 100.0);
+        });
+
         double minWidth = mainPane.getMinWidth();
         double minHeight = mainPane.getMinHeight();
         double sceneWidth = mainPane.getScene().getWidth();
@@ -106,10 +160,34 @@ public class ConverterWindowController
         verticalScrollValue = 0;
         horizontalScrollBar.setVisible(false);
         verticalScrollBar.setVisible(false);
+
+        InputStream previewConversionButtonImageStream = getClass().getResourceAsStream(previewConversionIconResourceName);
+        previewConversionToggleButtonImageView.setImage(previewConversionButtonImageStream != null ? new Image(previewConversionButtonImageStream) : null);
+
+        InputStream previewBlurButtonImageStream = getClass().getResourceAsStream(previewBlurIconResourceName);
+        previewBlurToggleButtonImageView.setImage(previewBlurButtonImageStream != null ? new Image(previewBlurButtonImageStream) : null);
+
+        InputStream blurRadiusPercentageImageStream = getClass().getResourceAsStream(blurRadiusPercentageIconResourceName);
+        blurRadiusPercentageImageView.setImage(blurRadiusPercentageImageStream != null ? new Image(blurRadiusPercentageImageStream) : null);
+
+        InputStream noiseReductionButtonImageStream = getClass().getResourceAsStream(noiseReductionButtonIconResourceName);
+        noiseReductionToggleButtonImageView.setImage(blurRadiusPercentageImageStream != null ? new Image(noiseReductionButtonImageStream) : null);
+
+        previewConversionToggleButton.setDisable(false);
+        previewBlurToggleButton.setDisable(false);
+        noiseReductionToggleButton.setDisable(false);
+
         maximizeToggleButton.setSelected(false);
         maximizeToggleButton.setDisable(true);
 
         setupFilesCollection(fileManager.getWorkingDirectory());
+
+        refreshPreview(PreviewType.NONE);
+        blurRadiusPercentageSlider.setLabelFormatter(new StringConverter<Double>() {
+            @Override public String toString(Double object) { return object.longValue() + "%"; }
+            @Override public Double fromString(String string) { return (double) Long.parseLong(string.substring(0, string.lastIndexOf("%"))); }
+        });
+        blurRadiusPercentageSlider.setValue(blurSliderDefaultValue);
     }
 
     public void onOpenFileButtonClick(ActionEvent actionEvent) throws IOException
@@ -162,13 +240,37 @@ public class ConverterWindowController
         {
             currentFileIndex = index;
             File currentFile = fileManager.getFileAtIndex(currentFileIndex);
+
+            ImageConverter.ConversionType previewConversionType = ImageConverter.ConversionType.NONE;
+            Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
+            switch(previewType)
+            {
+                case CONVERSION_RESULT:
+                    previewConversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
+                    params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    break;
+                case BLURRED_FILTER:
+                    previewConversionType = ImageConverter.ConversionType.BLURRED_FILTER;
+                    params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    break;
+                case NONE:
+                default:
+                    previewConversionType = ImageConverter.ConversionType.NONE;
+                    break;
+            }
+
             try
             {
                 // use a preview type here because the image is only shown in UI. This type is not the one of
                 // the saved image (the image will be converted again at save time), neither the one of the source
                 // image. Its purpose is just to allow the java UI to work correctly.
-                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType);
-                dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, conversionType, previewImageType);
+                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType, params);
+                if (previewType != PreviewType.NONE)
+                {
+                    dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, previewConversionType, previewImageType, params);
+                }
             }
             catch (IllegalArgumentException e)
             {
@@ -194,7 +296,7 @@ public class ConverterWindowController
         if (dstImageInputStream == null)
         {
             isBrokenOrEmptyDst = true;
-            dstImageInputStream = getClass().getResourceAsStream(fileManager.getFilesCount() > 0 ? brokenFileImageResourceName : defaultDstImageResourceName);
+            dstImageInputStream = getClass().getResourceAsStream((previewType != PreviewType.NONE && fileManager.getFilesCount() > 0) ? brokenFileImageResourceName : defaultDstImageResourceName);
         }
 
         Image sourceImage = new Image(srcImageInputStream);
@@ -386,7 +488,9 @@ public class ConverterWindowController
                     // UnsupportedEncodingException should never be thrown because the images collection includes
                     // only supported types (see FileManager.setupFiles).
                     // IllegalArgumentException should never be called because the extension is checked previously in this method.
-                    fileManager.convertAndSaveFile(srcFile, dstFile, conversionType);
+                    Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
+                    params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
                     String msg = "Conversion ended with success!";
                     Alert popup = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.CLOSE);
                     popup.show();
@@ -586,7 +690,9 @@ public class ConverterWindowController
                     // conflicts should be checked with the final extension.
                     // UnsupportedEncodingException should never be thrown because the images collection includes
                     // only supported types (see FileManager.setupFiles).
-                    fileManager.convertAndSaveFile(srcFile, dstFile, conversionType);
+                    Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
+                    params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
                 }
                 catch (IOException e)
                 {
@@ -681,12 +787,6 @@ public class ConverterWindowController
         }
     }
 
-    public void onToggleMaximize()
-    {
-        boolean maximized = maximizeToggleButton.isSelected();
-
-    }
-
     public void onSaveButtonClick(ActionEvent actionEvent)
     {
         Node eventTarget = (Node)actionEvent.getTarget();
@@ -702,5 +802,32 @@ public class ConverterWindowController
                 saveDirectory(eventWindow);
             }
         }
+    }
+
+    void refreshPreview(PreviewType newPreviewType)
+    {
+        if (!refreshingPreview)
+        {
+            refreshingPreview = true;
+
+            previewConversionToggleButton.setSelected(newPreviewType == PreviewType.CONVERSION_RESULT);
+            previewBlurToggleButton.setSelected(newPreviewType == PreviewType.BLURRED_FILTER);
+            noiseReductionToggleButton.setSelected(noiseReductionActivated);
+
+            previewType = newPreviewType;
+            try
+            {
+                setCurrentFileIndex(currentFileIndex); // refresh images
+            } catch (IOException e) { throw new RuntimeException(e); }
+
+            refreshingPreview = false;
+        }
+    }
+
+    void refreshBlurRadiusSize(double percentage)
+    {
+        blurFilterPercentage = percentage;
+        blurRadiusPercentageText.setText(Math.round(percentage * 100) + "%");
+        refreshPreview(previewType);
     }
 }
