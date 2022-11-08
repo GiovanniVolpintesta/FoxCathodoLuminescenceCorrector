@@ -54,18 +54,18 @@ public class ConverterWindowController
     @FXML private Button saveButton;
 
     @FXML private ToggleButton previewConversionToggleButton;
-    @FXML public ImageView previewConversionToggleButtonImageView;
+    @FXML private ImageView previewConversionToggleButtonImageView;
 
-    @FXML public ToggleButton previewBlurToggleButton;
-    @FXML public ImageView previewBlurToggleButtonImageView;
+    @FXML private ToggleButton previewBlurToggleButton;
+    @FXML private ImageView previewBlurToggleButtonImageView;
 
-    @FXML public ImageView blurRadiusPercentageImageView;
-    @FXML public Slider blurRadiusPercentageSlider;
-    @FXML public Label blurRadiusPercentageText;
+    @FXML private ImageView blurRadiusPercentageImageView;
+    @FXML private Slider blurRadiusPercentageSlider;
+    @FXML private Label blurRadiusPercentageText;
 
-    @FXML public ToggleButton noiseReductionToggleButton;
-    @FXML public ImageView noiseReductionToggleButtonImageView;
-    @FXML public Label noiseReductionToggleButtonLabel;
+    @FXML private ToggleButton noiseReductionToggleButton;
+    @FXML private ImageView noiseReductionToggleButtonImageView;
+    @FXML private Label noiseReductionToggleButtonLabel;
 
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
@@ -116,11 +116,7 @@ public class ConverterWindowController
         {
             useImageOriginalSize = newValue;
             resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
-            if (useImageOriginalSize)
-            {
-                horizontalScrollBar.setValue(0);
-                verticalScrollBar.setValue(0);
-            }
+            resetMaximizedImagesPadding();
         });
 
         previewConversionToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
@@ -230,21 +226,61 @@ public class ConverterWindowController
         saveButton.setDisable(fileManager.getFilesCount() == 0);
     }
 
-    private void setCurrentFileIndex (int index) throws IOException, IllegalArgumentException
+    private void setCurrentFileIndex (int index) throws IOException
     {
         currentFileIndex = -1;
 
         InputStream srcImageInputStream = null;
-        InputStream dstImageInputStream = null;
         if (index >= 0 && index < fileManager.getFilesCount())
         {
             currentFileIndex = index;
-            File currentFile = fileManager.getFileAtIndex(currentFileIndex);
 
+            try
+            {
+                // use a preview type here because the image is only shown in UI. This type is not the one of
+                // the saved image (the image will be converted again at save time), neither the one of the source
+                // image. Its purpose is just to allow the java UI to work correctly.
+                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType, new HashMap<>());
+            }
+            catch (IllegalArgumentException e)
+            {
+                // This should never happen.
+                // The image type is not supported as conversion output.
+                // Change previewImageType value to a supported one.
+                srcImageInputStream.close(); // release resources
+                srcImageInputStream = null;
+                throw e; // rethrow the caught exception
+            }
+        }
+
+        isBrokenOrEmptySrc = false;
+
+        if (srcImageInputStream == null)
+        {
+            isBrokenOrEmptySrc = true;
+            srcImageInputStream = getClass().getResourceAsStream(fileManager.getFilesCount() > 0 ? brokenFileImageResourceName : defaultSrcImageResourceName);
+        }
+
+        Image sourceImage = new Image(srcImageInputStream);
+        sourceImageView.setImage(sourceImage);
+
+        refreshCurrentFileIndexPreview();
+
+        resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+        resetMaximizedImagesPadding();
+
+        firstButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
+        previousButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
+        nextButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
+        lastButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
+    }
+
+    private void refreshCurrentFileIndexPreview() throws IOException {
+        InputStream dstImageInputStream = null;
+        if (currentFileIndex >= 0 && currentFileIndex < fileManager.getFilesCount()) {
             ImageConverter.ConversionType previewConversionType = ImageConverter.ConversionType.NONE;
             Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
-            switch(previewType)
-            {
+            switch (previewType) {
                 case CONVERSION_RESULT:
                     previewConversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
@@ -261,66 +297,34 @@ public class ConverterWindowController
                     break;
             }
 
-            try
-            {
+            try {
                 // use a preview type here because the image is only shown in UI. This type is not the one of
                 // the saved image (the image will be converted again at save time), neither the one of the source
                 // image. Its purpose is just to allow the java UI to work correctly.
-                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType, params);
-                if (previewType != PreviewType.NONE)
-                {
+                if (previewType != PreviewType.NONE) {
                     dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, previewConversionType, previewImageType, params);
                 }
-            }
-            catch (IllegalArgumentException e)
-            {
+            } catch (IllegalArgumentException e) {
                 // This should never happen.
                 // The image type is not supported as conversion output.
                 // Change previewImageType value to a supported one.
-                srcImageInputStream.close(); // release resources
-                srcImageInputStream = null;
                 dstImageInputStream.close();
                 dstImageInputStream = null;
                 throw e; // rethrow the caught exception
             }
         }
 
-        isBrokenOrEmptySrc = false;
         isBrokenOrEmptyDst = false;
 
-        if (srcImageInputStream == null)
-        {
-            isBrokenOrEmptySrc = true;
-            srcImageInputStream = getClass().getResourceAsStream(fileManager.getFilesCount() > 0 ? brokenFileImageResourceName : defaultSrcImageResourceName);
-        }
         if (dstImageInputStream == null)
         {
             isBrokenOrEmptyDst = true;
             dstImageInputStream = getClass().getResourceAsStream((previewType != PreviewType.NONE && fileManager.getFilesCount() > 0) ? brokenFileImageResourceName : defaultDstImageResourceName);
         }
 
-        Image sourceImage = new Image(srcImageInputStream);
         Image convertedImage = new Image (dstImageInputStream);
 
-        BorderPane p;
-        double paneWidth = imagesPane.getWidth();
-        double paneHeight = imagesPane.getHeight();
-        sourceImageView.setImage(sourceImage);
         convertedImageView.setImage(convertedImage);
-        resizeImages(paneWidth, paneHeight);
-
-        maximizeToggleButton.setDisable(isBrokenOrEmptySrc || isBrokenOrEmptyDst);
-
-        if (useImageOriginalSize)
-        {
-            horizontalScrollBar.setValue(0);
-            verticalScrollBar.setValue(0);
-        }
-
-        firstButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
-        previousButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
-        nextButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
-        lastButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
     }
 
     private void resizeImages (double paneWidth, double paneHeight)
@@ -408,6 +412,11 @@ public class ConverterWindowController
             sourceImageView.setViewport(new Rectangle2D(0, 0, srcImageWidth, srcImageHeight));
             convertedImageView.setViewport(new Rectangle2D(0, 0, cnvImageWidth, cnvImageHeight));
         }
+    }
+
+    private void resetMaximizedImagesPadding()
+    {
+
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -804,7 +813,7 @@ public class ConverterWindowController
         }
     }
 
-    void refreshPreview(PreviewType newPreviewType)
+    private void refreshPreview(PreviewType newPreviewType)
     {
         if (!refreshingPreview)
         {
@@ -815,16 +824,20 @@ public class ConverterWindowController
             noiseReductionToggleButton.setSelected(noiseReductionActivated);
 
             previewType = newPreviewType;
+
             try
             {
-                setCurrentFileIndex(currentFileIndex); // refresh images
+                refreshCurrentFileIndexPreview(); // refresh preview image
             } catch (IOException e) { throw new RuntimeException(e); }
+
+            resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+            resetMaximizedImagesPadding();
 
             refreshingPreview = false;
         }
     }
 
-    void refreshBlurRadiusSize(double percentage)
+    private void refreshBlurRadiusSize(double percentage)
     {
         blurFilterPercentage = percentage;
         blurRadiusPercentageText.setText(Math.round(percentage * 100) + "%");
