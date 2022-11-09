@@ -70,6 +70,7 @@ public class ConverterWindowController
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
 
+    private final ImageConverter imageConverter;
     private final FileManager fileManager;
     private int currentFileIndex = -1;
     private boolean isBrokenOrEmptySrc = false;
@@ -89,7 +90,8 @@ public class ConverterWindowController
     private double blurFilterPercentage = blurSliderDefaultValue / 100.0;
     public ConverterWindowController ()
     {
-        fileManager = new FileManager();
+        imageConverter = new ImageConverter();
+        fileManager = new FileManager(imageConverter);
     }
 
     public void init() throws IOException
@@ -194,7 +196,7 @@ public class ConverterWindowController
         FileChooser fileChooser = new FileChooser ();
         fileChooser.setTitle("Select an image file");
         fileChooser.setInitialDirectory(fileManager.getWorkingDirectory());
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Any image type", Arrays.asList(ImageConverter.getInputFileFilters())));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Any image type", Arrays.asList(imageConverter.getInputFileFilters())));
 
         File chosenFile = fileChooser.showOpenDialog(eventWindow);
         if (chosenFile != null)
@@ -429,16 +431,16 @@ public class ConverterWindowController
             fileChooser.setTitle("Save a file");
             fileChooser.setInitialDirectory(srcFile.getParentFile());
             fileChooser.setInitialFileName(srcFile.getName());
-            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Any image type", Arrays.asList(ImageConverter.getOutputFileFilters())));
+            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Any image type", Arrays.asList(imageConverter.getOutputFileFilters())));
 
             File dstFile = fileChooser.showSaveDialog(ownerWindow);
             if (dstFile != null)
             {
                 // Check the extension, as the user could choose extensions that are not valid (even if the filter has been set in the dialog)
-                if (!FileManager.isFileOutputSupported(dstFile))
+                if (!fileManager.isFileOutputSupported(dstFile))
                 {
                     Alert extensionAlert = new Alert(Alert.AlertType.CONFIRMATION
-                            , "The file type is not supported as conversion output. Both the image type and file extension will be converted to " + ImageConverter.getDefaultOutputType().toUpperCase() + ". Would you like to proceed?"
+                            , "The file type is not supported as conversion output. Both the image type and file extension will be converted to " + imageConverter.getDefaultOutputType().toUpperCase() + ". Would you like to proceed?"
                             , ButtonType.YES
                             , ButtonType.NO
                     );
@@ -451,7 +453,7 @@ public class ConverterWindowController
                         {
                             filename = filename.substring(0, extensionPointIndex); // remove point and extension
                         }
-                        dstFile = new File(dstFile.getParentFile(), filename + "." + ImageConverter.getDefaultOutputType());
+                        dstFile = new File(dstFile.getParentFile(), filename + "." + imageConverter.getDefaultOutputType());
                     }
                     else
                     {
@@ -510,7 +512,7 @@ public class ConverterWindowController
                     {
                         dstFile.delete();
                     }
-                    String msg = "The extension of the image does not correspond to any supported conversion output type. Please, repeat the save operation using one of the following extensions:\n" + Arrays.toString(ImageConverter.getSupportedOutputTypes());
+                    String msg = "The extension of the image does not correspond to any supported conversion output type. Please, repeat the save operation using one of the following extensions:\n" + Arrays.toString(imageConverter.getSupportedOutputTypes());
                     Alert popup = new Alert(Alert.AlertType.ERROR, msg, ButtonType.CLOSE);
                     popup.show();
                 }
@@ -576,12 +578,12 @@ public class ConverterWindowController
             // of the dstImage is not supported as conversion output. We can convert such images to the default output
             // type defined by ImageConverter, but the file extension should be changed accordingly, and it should be
             // changed here to correctly handle the file conflicts later.
-            if (!FileManager.isFileOutputSupported(dstFile))
+            if (!fileManager.isFileOutputSupported(dstFile))
             {
                 if (confirmedTypeChange == null) // If the popup has never been shown
                 {
                     Alert extensionAlert = new Alert(Alert.AlertType.CONFIRMATION
-                            , "Some of the file types are not supported as conversion output. Both the unsupported images type and files extension will be converted to " + ImageConverter.getDefaultOutputType().toUpperCase() + ". Would you like to proceed?"
+                            , "Some of the file types are not supported as conversion output. Both the unsupported images type and files extension will be converted to " + imageConverter.getDefaultOutputType().toUpperCase() + ". Would you like to proceed?"
                             , ButtonType.YES
                             , ButtonType.NO
                     );
@@ -604,7 +606,7 @@ public class ConverterWindowController
                     {
                         filename = filename.substring(0, extensionPointIndex); // excluding point and extension
                     }
-                    dstFile = new File(dstFile.getParentFile(), filename + "." + ImageConverter.getDefaultOutputType());
+                    dstFile = new File(dstFile.getParentFile(), filename + "." + imageConverter.getDefaultOutputType());
                     changedTypeFiles.add(srcFile);
                 }
             }
@@ -753,7 +755,7 @@ public class ConverterWindowController
                     }
                     if (changedTypeFiles.contains(srcFile))
                     {
-                        msgLine += " - The source image type was not supported as conversion output, so the converted image type is now " + ImageConverter.getDefaultOutputType();
+                        msgLine += " - The source image type was not supported as conversion output, so the converted image type is now " + imageConverter.getDefaultOutputType();
                     }
                 }
                 detailsPopupMsg.append(msgLine);
