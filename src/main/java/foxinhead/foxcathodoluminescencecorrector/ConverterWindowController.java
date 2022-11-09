@@ -64,7 +64,6 @@ public class ConverterWindowController
 
     @FXML private ToggleButton noiseReductionToggleButton;
     @FXML private ImageView noiseReductionToggleButtonImageView;
-    @FXML private Label noiseReductionToggleButtonLabel;
 
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
@@ -181,7 +180,7 @@ public class ConverterWindowController
         noiseReductionToggleButton.setDisable(false);
 
         maximizeToggleButton.setSelected(false);
-        maximizeToggleButton.setDisable(true);
+        maximizeToggleButton.setDisable(false);
 
         setupFilesCollection(fileManager.getWorkingDirectory());
 
@@ -352,12 +351,6 @@ public class ConverterWindowController
 
         if (imagesHaveSameSize)
         {
-            if (isImageWiderThanArea != tmpIsImageWiderThanArea
-                    || isImageHigherThanArea != tmpIsImageHigherThanArea)
-            {
-                maximizeToggleButton.setDisable(!tmpIsImageWiderThanArea && !tmpIsImageHigherThanArea);
-            }
-
             if (isImageWiderThanArea != tmpIsImageWiderThanArea)
             {
                 isImageWiderThanArea = tmpIsImageWiderThanArea;
@@ -372,6 +365,7 @@ public class ConverterWindowController
 
             horizontalScrollBar.setVisible(useImageOriginalSize && isImageWiderThanArea && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst));
             verticalScrollBar.setVisible(useImageOriginalSize && isImageHigherThanArea && !(isBrokenOrEmptySrc || isBrokenOrEmptyDst));
+            maximizeToggleButton.setDisable(false);
         }
         else
         {
