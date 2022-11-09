@@ -6,10 +6,15 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayInputStream;
+import java.net.ContentHandler;
 import java.util.*;
 
 public class ImageConverter
 {
+
+    private static final String SRC_IMAGE_CACHE_KEY = "srcImage";
+    private static final String RESIZED_IMAGE_CACHE_KEY = "resizedImage";
+
     public enum ConversionType
     {
         NONE
@@ -21,8 +26,8 @@ public class ImageConverter
     public enum ConversionParameter
     {
         NONE
-        , PARAM_SIGMA
-        , NOISE_REDUCTION_ACTIVATED
+        , PARAM_SIGMA                       // double
+        , NOISE_REDUCTION_ACTIVATED         // boolean
     }
 
     private class ConversionCache
@@ -44,7 +49,11 @@ public class ImageConverter
             mimMaxLocResultCache = new HashMap<>();
         }
 
-        public final boolean isSameFile (String srcFilename) { return this.srcFilename.equals(srcFilename); }
+        public final boolean isSameFile (String srcFilename)
+        {
+            return (this.srcFilename == null && srcFilename == null)
+                    || (this.srcFilename != null && this.srcFilename.equals(srcFilename));
+        }
 
         public final boolean containsParameter (ConversionParameter paramKey) { return params.containsKey(paramKey); };
         public final String getParameter(ConversionParameter paramKey) { return params.get(paramKey); }
@@ -117,6 +126,21 @@ public class ImageConverter
             this.srcFilename = srcFilename;
         }
 
+        public final void clear() { init(null); }
+
+    }
+
+    private double cachedImageSizeRatioLowerTolerance = 0.8;
+    public final void setCachedImageSizeRatioLowerTolerance(double newVal)
+    {
+        if (newVal < 0.001 || newVal > 1.001) throw new IllegalArgumentException("newVal must be in range ]0, 1]");
+        cachedImageSizeRatioLowerTolerance = newVal;
+    }
+    private double cachedImageSizeRatioHigherTolerance = 1.1;
+    public final void setCachedImageSizeRatioHigherTolerance(double newVal)
+    {
+        if (newVal < 0.999) throw new IllegalArgumentException("newVal must be greater or equal than 1");
+        cachedImageSizeRatioHigherTolerance = newVal;
     }
 
     // png, bmp, jpg, jpeg, webp, tif, ppm, pnm: conversion supported
@@ -185,16 +209,28 @@ public class ImageConverter
         return false;
     }
 
-    public final ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, Map<ConversionParameter, String> params)
+    public final void clearConvertionCache (ConversionType conversionType)
     {
-        return internalConvertImageInMemory(srcImageFileName, conversionType, defaultOutputType, params);
+        caches.get(conversionType).clear();
+    }
+    public final void clearAllConvertionCaches ()
+    {
+        for (ConversionType key : caches.keySet())
+        {
+            caches.get(key).clear();
+        }
     }
 
-    public final ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType, Map<ConversionParameter, String> params) throws IllegalArgumentException
+    public final ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight)
+    {
+        return internalConvertImageInMemory(srcImageFileName, conversionType, defaultOutputType, params, desiredWidth, desiredHeight);
+    }
+
+    public final ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight) throws IllegalArgumentException
     {
         if (isTypeSupportedAsOutput(outputType))
         {
-            return internalConvertImageInMemory(srcImageFileName, conversionType, outputType, params);
+            return internalConvertImageInMemory(srcImageFileName, conversionType, outputType, params, desiredWidth, desiredHeight);
         }
         else
         {
@@ -202,49 +238,178 @@ public class ImageConverter
         }
     }
 
-    private final ByteArrayInputStream internalConvertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType, Map<ConversionParameter, String> params)
+    private final ByteArrayInputStream internalConvertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight)
     {
         ByteArrayInputStream inputStream = null;
 
         ConversionCache cache = caches.get(conversionType);
-        if (cache.isSameFile(srcImageFileName) && cache.areSameParameters(params) && cache.containsEncodedImage(outputType))
+
+        if (!cache.isSameFile(srcImageFileName))
         {
-            MatOfByte encodedImageBytes = cache.getEncodedImage(outputType);
-            inputStream = new ByteArrayInputStream(encodedImageBytes.toArray());
+            cache.init(srcImageFileName);
         }
-        else
+
+        // This could clear the whole cache, if the desired size is not compatible with the cached images
+        Mat source = ComputeResizedSource (srcImageFileName, conversionType, params, desiredWidth, desiredHeight);
+
+        if (!source.empty())
         {
-            if (!cache.isSameFile(srcImageFileName))
+            if (cache.isSameFile(srcImageFileName) && cache.areSameParameters(params) && cache.containsEncodedImage(outputType))
             {
-                cache.init(srcImageFileName);
-            }
-
-            Mat m = Imgcodecs.imread(srcImageFileName);
-            Mat conversionOutput = ConvertMat(m, conversionType, params);
-            m.release();
-
-            MatOfByte encodedImageBytes = new MatOfByte();
-            try
-            {
-                Imgcodecs.imencode("." + outputType, conversionOutput, encodedImageBytes);
-                cache.cacheEncodedImage(outputType, encodedImageBytes);
+                MatOfByte encodedImageBytes = cache.getEncodedImage(outputType);
                 inputStream = new ByteArrayInputStream(encodedImageBytes.toArray());
             }
-            catch (CvException e)
+            else
             {
-                // caused by error: (-215:Assertion failed) !image.empty() in function 'cv::imencode'
-                // the file cannot be read
-                inputStream = null;
+                // the result image is cached inside che ConvertMat method, so it is not necessary to handle another cached image here
+                Mat conversionOutput = ConvertMat(source, conversionType, params, desiredWidth, desiredHeight);
+
+                MatOfByte encodedImageBytes = new MatOfByte();
+                try
+                {
+                    Imgcodecs.imencode("." + outputType, conversionOutput, encodedImageBytes);
+                    inputStream = new ByteArrayInputStream(encodedImageBytes.toArray());
+                    cache.cacheEncodedImage(outputType, encodedImageBytes);
+                }
+                catch (CvException e)
+                {
+                    // caused by error: (-215:Assertion failed) !image.empty() in function 'cv::imencode'
+                    // the file cannot be read
+                    inputStream = null;
+                }
             }
         }
 
         return inputStream;
     }
 
-    private final Mat ConvertMat (Mat source, ConversionType conversionType, Map<ConversionParameter, String> params)
+    private final Mat ComputeResizedSource (String srcImageFileName, ConversionType conversionType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight)
+    {
+        ConversionCache cache = caches.get(conversionType);
+
+        Mat srcImage;
+        if (cache.containsImage(SRC_IMAGE_CACHE_KEY))
+        {
+            srcImage = cache.getImage(SRC_IMAGE_CACHE_KEY);
+        }
+        else
+        {
+            srcImage = Imgcodecs.imread(srcImageFileName);
+            cache.cacheImage(SRC_IMAGE_CACHE_KEY, srcImage);
+        }
+
+        if (srcImage.empty())
+        {
+            return srcImage;
+        }
+
+        // Resize the image to its desired size before the conversion.
+        // This allows faster conversions where the desired result size is lower than the original image
+
+        // Sanitize the desired image size
+        // If parameters are missing or not valid, the image should not be resized
+        boolean shouldResizeImage = ((desiredWidth > 0 && desiredHeight > 0) && (desiredWidth < srcImage.width() || desiredHeight < srcImage.height()));
+        if (shouldResizeImage)
+        {
+            // Correct the desired size. As an image size increment is not allowed,
+            // the desired size should always be lower or equal than the original image size
+            desiredWidth = Math.min(desiredWidth, srcImage.width());
+            desiredHeight = Math.min(desiredHeight, srcImage.height());
+
+            //Correct the desired size to keep the original image aspect ratio
+            double originalImageRatio = srcImage.width()/((double)srcImage.height());
+            // r = w / h   ->   w = h * r  ->   h = w / r
+            if (originalImageRatio >= 1.0)
+            {
+                // The image extends in horizontal direction. Keep the width and recompute the height.
+                desiredHeight = (int)(desiredWidth / originalImageRatio);
+            }
+            else
+            {
+                // The image extends in vertical direction. Keep the height and recompute the width.
+                desiredWidth = (int)(desiredHeight * originalImageRatio);
+            }
+        }
+        else
+        {
+            // Correct the desired size.
+            // If the image should not be resized, its desired size is equal to its original size.
+            desiredWidth = srcImage.width();
+            desiredHeight = srcImage.height();
+        }
+
+        // See if there is already a cached resized image, and if there is, check if its size is compatible with the desired one
+
+        Mat resizedImage = null;
+        if (cache.containsImage("resizedImage"))
+        {
+            resizedImage = cache.getImage("resizedImage");
+            // Validate if the cached image is still valid for the currently requested size
+            int cachedImageWidth = resizedImage.width();
+            int cachedImageHeight = resizedImage.height();
+            if (desiredWidth/((double)cachedImageWidth) > cachedImageSizeRatioHigherTolerance || desiredHeight/((double)cachedImageHeight) > cachedImageSizeRatioHigherTolerance // Cond_1
+                    || desiredWidth/((double)cachedImageWidth) < cachedImageSizeRatioLowerTolerance || desiredHeight/((double)cachedImageHeight) < cachedImageSizeRatioLowerTolerance) // Cond_2
+            {
+                // Cond_1: Cannot upscale, so the desired image cannot be greater than the cached one.
+                // To avoid to clear the cache because of differences in the order of few pixels, the cache is cleared only if the
+                // ratio between the desired and the cached image size is greater than a tolerance.
+
+                // Cond_2: If the ratio between the desired and the cached image size is lower than the tolerance,
+                // the cached images can be cleared to allow the conversion methods to cache smaller images,
+                // which should result in faster conversions.
+
+                // Clear all the cache, but maintain the source image
+
+                resizedImage = null; // just nullify the handle. The image memory is released when the cache is cleared.
+
+                if (cache.containsImage(SRC_IMAGE_CACHE_KEY))
+                {
+                    // Create a deep copy of the old image because the cached image memory is released upon cache clearing.
+                    // srcImage will reference the new image because the old one, which is stored in cache,
+                    // will be released when the cache is cleared.
+                    Mat oldSrcImage = srcImage;
+                    srcImage = Mat.zeros(srcImage.rows(), srcImage.cols(), srcImage.type());
+                    oldSrcImage.copyTo(srcImage);
+                }
+
+                cache.clear(); // clear the cache, releasing images memory
+
+                // if this is false, there is a problem in code,
+                // because the image memory has been released and it shouldn't have been.
+                assert(!srcImage.empty());
+
+                cache.cacheImage(SRC_IMAGE_CACHE_KEY, srcImage); // cache again the source image
+            }
+        }
+
+        // Check if a cached resized image still exists (it could have been cleared, or it could have never existed)
+        if (cache.containsImage(RESIZED_IMAGE_CACHE_KEY))
+        {
+            resizedImage = cache.getImage(RESIZED_IMAGE_CACHE_KEY);
+        }
+        else
+        {
+            // rows = desiredHeight; cols = desiredWidth
+            resizedImage = Mat.zeros(desiredHeight, desiredWidth, srcImage.type());
+            // fx and fy are 0 because the size is taken from the size parameter.
+            // The interpolation is INTER_AREA because, according to the documentation, it the best to shrink an image.
+            // (as the resized image is always smaller than the original image, the operation is always a shrinking)
+            Imgproc.resize(srcImage, resizedImage, resizedImage.size(), 0, 0, Imgproc.INTER_AREA);
+            cache.cacheImage(RESIZED_IMAGE_CACHE_KEY, resizedImage);
+        }
+
+        return resizedImage;
+    }
+
+    private final Mat ConvertMat (Mat source, ConversionType conversionType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight)
     {
         double sigma = params.containsKey(ConversionParameter.PARAM_SIGMA) ? Double.parseDouble(params.get(ConversionParameter.PARAM_SIGMA)) : 0.0;
         boolean performNoiseReduction = params.containsKey(ConversionParameter.NOISE_REDUCTION_ACTIVATED) && Boolean.parseBoolean(params.get(ConversionParameter.NOISE_REDUCTION_ACTIVATED));
+
+        if (source.empty())
+        {
+            return Mat.zeros(source.rows(), source.cols(), source.type());
+        }
 
         switch (conversionType)
         {
@@ -571,9 +736,16 @@ public class ImageConverter
 
         // Apply gaussian blur with a big sigma that is dependent on the image size
         double sigma1 = Math.min(nRows, nCols) * sigmaMultiplier;
-        Mat blurred = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-        Imgproc.GaussianBlur(vChannel, blurred, new Size(0, 0), sigma1, sigma1, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
+        Mat result = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+        if (sigma1 >= 1)
+        {
+            Imgproc.GaussianBlur(vChannel, result, new Size(0, 0), sigma1, sigma1, Core.BORDER_REPLICATE); // the size of the filter is computed using the sigma
+        }
+        else
+        {
+            vChannel.copyTo(result);
+        }
 
-        return blurred;
+        return result;
     }
 }

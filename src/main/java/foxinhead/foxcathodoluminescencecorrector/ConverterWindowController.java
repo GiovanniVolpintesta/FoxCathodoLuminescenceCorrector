@@ -7,7 +7,6 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.DirectoryChooser;
@@ -82,6 +81,9 @@ public class ConverterWindowController
     private double horizontalScrollValue = 0;
     private double verticalScrollValue = 0;
 
+    private double[] srcImageDesiredSize = { 0.0, 0.0 };
+    private double[] dstImageDesiredSize = { 0.0, 0.0 };
+
     private PreviewType previewType = PreviewType.NONE;
     private boolean refreshingPreview = false; // recursion check
 
@@ -99,10 +101,12 @@ public class ConverterWindowController
         imagesPane.widthProperty().addListener((property, oldValue, newValue) ->
         {
             resizeImages(newValue.doubleValue(), imagesPane.getHeight());
+            try { setCurrentFileIndex(currentFileIndex); } catch (IOException e) { throw new RuntimeException(e); }
         });
         imagesPane.heightProperty().addListener((property, oldValue, newValue) ->
         {
             resizeImages(imagesPane.getWidth(), newValue.doubleValue());
+            try { setCurrentFileIndex(currentFileIndex); } catch (IOException e) { throw new RuntimeException(e); }
         });
         horizontalScrollBar.valueProperty().addListener((property, oldValue, newValue) ->
         {
@@ -118,6 +122,7 @@ public class ConverterWindowController
         {
             useImageOriginalSize = newValue;
             resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+            try { setCurrentFileIndex(currentFileIndex); } catch (IOException e) { throw new RuntimeException(e); }
             resetMaximizedImagesPadding();
         });
 
@@ -242,7 +247,7 @@ public class ConverterWindowController
                 // use a preview type here because the image is only shown in UI. This type is not the one of
                 // the saved image (the image will be converted again at save time), neither the one of the source
                 // image. Its purpose is just to allow the java UI to work correctly.
-                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType, new HashMap<>());
+                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType, new HashMap<>(), (int)Math.round(srcImageDesiredSize[0]), (int)Math.round(srcImageDesiredSize[1]));
             }
             catch (IllegalArgumentException e)
             {
@@ -304,7 +309,7 @@ public class ConverterWindowController
                 // the saved image (the image will be converted again at save time), neither the one of the source
                 // image. Its purpose is just to allow the java UI to work correctly.
                 if (previewType != PreviewType.NONE) {
-                    dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, previewConversionType, previewImageType, params);
+                    dstImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, previewConversionType, previewImageType, params, (int)Math.round(dstImageDesiredSize[0]), (int)Math.round(dstImageDesiredSize[1]));
                 }
             } catch (IllegalArgumentException e) {
                 // This should never happen.
@@ -414,6 +419,9 @@ public class ConverterWindowController
             sourceImageView.setViewport(new Rectangle2D(0, 0, srcImageWidth, srcImageHeight));
             convertedImageView.setViewport(new Rectangle2D(0, 0, cnvImageWidth, cnvImageHeight));
         }
+
+        srcImageDesiredSize = useImageOriginalSize ? new double[] { -1, -1 } : new double[] { imageViewDesiredWidth, imageViewDesiredHeight };
+        dstImageDesiredSize = srcImageDesiredSize;
     }
 
     private void resetMaximizedImagesPadding()

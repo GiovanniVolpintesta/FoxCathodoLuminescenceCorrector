@@ -75,22 +75,22 @@ public class FileManager
         }
     }
 
-    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType, Map<ImageConverter.ConversionParameter, String> params) throws IllegalArgumentException
+    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType, Map<ImageConverter.ConversionParameter, String> params, int desiredWidth, int desiredHeight) throws IllegalArgumentException
     {
         File file = getFileAtIndex(fileIndex);
         if (file != null && file.exists())
         {
-            return imageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, outputType, params);
+            return imageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, outputType, params, desiredWidth, desiredHeight);
         }
         return null;
     }
 
-    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params)
+    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params, int desiredWidth, int desiredHeight)
     {
         File file = getFileAtIndex(fileIndex);
         if (file != null)
         {
-            return imageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, params);
+            return imageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, params, desiredWidth, desiredHeight);
         }
         return null;
     }
@@ -105,7 +105,10 @@ public class FileManager
                 throw new UnsupportedEncodingException("The source file has not a supported encoding. Only the following encodings are supported: " + Arrays.toString(imageConverter.getInputFileFilters()));
             }
 
-            InputStream convertedImage = imageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile), params);
+            // clear conversion cache: the conversion result (saved) should not be affected by cached settings such as the images size, which are used to compute the preview images.
+            imageConverter.clearConvertionCache(conversionType);
+
+            InputStream convertedImage = imageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile), params, -1, -1);
             if (convertedImage == null || convertedImage.available() == 0)
             {
                 if (convertedImage != null)
