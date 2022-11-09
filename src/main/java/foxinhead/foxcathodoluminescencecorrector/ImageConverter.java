@@ -623,6 +623,9 @@ public class ImageConverter
                 // Don't release vChannelDivided_0_255 yet, otherwise also vChannelNew_0_255 is released
             }
 
+            // in any case, remap the channel to the original vChannel Max value
+            Core.multiply(vChannelNew_0_255, new Scalar(vChannelMinMax.maxVal / 255.0), vChannelNew_0_255);
+
             cache.cacheImage("vChannelNew_0_255", vChannelNew_0_255);
         }
 
