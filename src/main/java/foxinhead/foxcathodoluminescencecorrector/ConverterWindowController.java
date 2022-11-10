@@ -36,6 +36,8 @@ public class ConverterWindowController
     private static final String blurRadiusPercentageIconResourceName = "/icons/blur_radius_percentage_icon.png";
     private static final String noiseReductionButtonIconResourceName = "/icons/noise_reduction_icon.png";
     private static final String maxContrastButtonIconResourceName = "/icons/max_constrast_icon.png";
+    private static final String thresholdTestHandlerIconResourceName = "/icons/threshold_handler_icon.png";
+
     private static final String previewImageType = "png";
 
     private static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
@@ -66,6 +68,12 @@ public class ConverterWindowController
     @FXML private ImageView blurRadiusPercentageImageView;
     @FXML private Slider blurRadiusPercentageSlider;
     @FXML private Label blurRadiusPercentageText;
+
+    @FXML public Slider thresholdTestHandlerSlider;
+    @FXML public ImageView thresholdTestHandlerImageView;
+    @FXML public Label thresholdTestHandlerText;
+
+
 
     @FXML private ToggleButton noiseReductionToggleButton;
     @FXML private ImageView noiseReductionToggleButtonImageView;
@@ -99,7 +107,7 @@ public class ConverterWindowController
 
     private double blurFilterPercentage = blurSliderDefaultValue / 100.0;
 
-    private double thresholdTestValue = 150.0;
+    private double thresholdTestValue = 127;
 
     public ConverterWindowController ()
     {
@@ -164,7 +172,12 @@ public class ConverterWindowController
 
         blurRadiusPercentageSlider.valueProperty().addListener((property, oldValue, newValue) ->
         {
-            refreshBlurRadiusSize(Math.max(0.0, Math.min(100.0, (double)newValue)) / 100.0);
+            refreshBlurRadiusSize(((double)newValue) / 100.0);
+        });
+
+        thresholdTestHandlerSlider.valueProperty().addListener((property, oldValue, newValue) ->
+        {
+            refreshThresholdTestValue((double)newValue);
         });
 
         double minWidth = mainPane.getMinWidth();
@@ -201,6 +214,9 @@ public class ConverterWindowController
         InputStream maxContrastButtonImageStream = getClass().getResourceAsStream(maxContrastButtonIconResourceName);
         maxContrastToggleButtonImageView.setImage(maxContrastButtonImageStream != null ? new Image(maxContrastButtonImageStream) : null);
 
+        InputStream thresholdTestHandlerImageStream = getClass().getResourceAsStream(thresholdTestHandlerIconResourceName);
+        thresholdTestHandlerImageView.setImage(thresholdTestHandlerImageStream != null ? new Image(thresholdTestHandlerImageStream) : null);
+
         previewConversionToggleButton.setDisable(false);
         previewBlurToggleButton.setDisable(false);
         previewThresholdToggleButton.setDisable(false);
@@ -215,11 +231,14 @@ public class ConverterWindowController
         setupFilesCollection(fileManager.getWorkingDirectory());
 
         refreshPreview(PreviewType.NONE);
+
         blurRadiusPercentageSlider.setLabelFormatter(new StringConverter<Double>() {
             @Override public String toString(Double object) { return object.longValue() + "%"; }
             @Override public Double fromString(String string) { return (double) Long.parseLong(string.substring(0, string.lastIndexOf("%"))); }
         });
+
         blurRadiusPercentageSlider.setValue(blurSliderDefaultValue);
+        thresholdTestHandlerSlider.setValue(thresholdTestValue);
     }
 
     public void onOpenFileButtonClick(ActionEvent actionEvent) throws IOException
@@ -880,7 +899,12 @@ public class ConverterWindowController
             previewConversionToggleButton.setSelected(newPreviewType == PreviewType.CONVERSION_RESULT);
             previewBlurToggleButton.setSelected(newPreviewType == PreviewType.BLURRED_FILTER);
             previewThresholdToggleButton.setSelected(newPreviewType == PreviewType.THRESHOLD_TEST);
+
             noiseReductionToggleButton.setSelected(noiseReductionActivated);
+
+            thresholdTestHandlerSlider.setDisable(newPreviewType != PreviewType.THRESHOLD_TEST);
+            thresholdTestHandlerImageView.setDisable(newPreviewType != PreviewType.THRESHOLD_TEST);
+            thresholdTestHandlerText.setDisable(newPreviewType != PreviewType.THRESHOLD_TEST);
 
             previewType = newPreviewType;
 
@@ -902,8 +926,15 @@ public class ConverterWindowController
 
     private void refreshBlurRadiusSize(double percentage)
     {
-        blurFilterPercentage = percentage;
-        blurRadiusPercentageText.setText(Math.round(percentage * 100) + "%");
+        blurFilterPercentage = Math.max(0, Math.min(percentage, 1));
+        blurRadiusPercentageText.setText(Math.max(0, Math.min(Math.round(blurFilterPercentage * 100), 100)) + "%");
+        refreshPreview(previewType);
+    }
+
+    private void refreshThresholdTestValue(double threshold)
+    {
+        thresholdTestValue = Math.max(0, Math.min(threshold, 255));
+        thresholdTestHandlerText.setText(Long.toString(Math.max(0, Math.min(Math.round(thresholdTestValue), 255))));
         refreshPreview(previewType);
     }
 }

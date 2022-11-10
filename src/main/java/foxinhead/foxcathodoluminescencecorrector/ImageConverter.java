@@ -610,10 +610,10 @@ public class ImageConverter
         }
         else
         {
+            vChannelNew_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
             if (performNoiseReduction)
             {
                 Mat vChannelNew = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
-                vChannelNew_0_255 = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
 
                 double sigma2 = 10;
                 // Filter minimo
@@ -642,8 +642,7 @@ public class ImageConverter
             }
             else
             {
-                vChannelNew_0_255 = vChannelDivided_0_255;
-                // Don't release vChannelDivided_0_255 yet, otherwise also vChannelNew_0_255 is released
+                vChannelDivided_0_255.copyTo(vChannelNew_0_255);
             }
 
             cache.cacheImage("vChannelNew_0_255", vChannelNew_0_255);
