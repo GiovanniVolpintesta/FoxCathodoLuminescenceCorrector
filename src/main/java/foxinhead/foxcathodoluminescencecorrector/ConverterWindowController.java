@@ -34,6 +34,7 @@ public class ConverterWindowController
     private static final String previewBlurIconResourceName = "/icons/preview_blur_icon.png";
     private static final String blurRadiusPercentageIconResourceName = "/icons/blur_radius_percentage_icon.png";
     private static final String noiseReductionButtonIconResourceName = "/icons/noise_reduction_icon.png";
+    private static final String maxContrastButtonIconResourceName = "/icons/max_constrast_icon.png";
     private static final String previewImageType = "png";
 
     private static final ImageConverter.ConversionType conversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
@@ -68,6 +69,9 @@ public class ConverterWindowController
     @FXML private ScrollBar horizontalScrollBar;
     @FXML private ScrollBar verticalScrollBar;
 
+    @FXML private ToggleButton maxContrastToggleButton;
+    @FXML private ImageView maxContrastToggleButtonImageView;
+
     private final ImageConverter imageConverter;
     private final FileManager fileManager;
     private int currentFileIndex = -1;
@@ -87,6 +91,7 @@ public class ConverterWindowController
     private boolean refreshingPreview = false; // recursion check
 
     private boolean noiseReductionActivated = true;
+    private boolean maxContrastActivated = false;
 
     private double blurFilterPercentage = blurSliderDefaultValue / 100.0;
     public ConverterWindowController ()
@@ -137,7 +142,12 @@ public class ConverterWindowController
         noiseReductionToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
         {
             noiseReductionActivated = newValue;
-            noiseReductionToggleButton.setText(noiseReductionActivated ? "\uD83D\uDDF9" : "\u2610");
+            refreshPreview(previewType);
+        });
+
+        maxContrastToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            maxContrastActivated = newValue;
             refreshPreview(previewType);
         });
 
@@ -173,11 +183,17 @@ public class ConverterWindowController
         blurRadiusPercentageImageView.setImage(blurRadiusPercentageImageStream != null ? new Image(blurRadiusPercentageImageStream) : null);
 
         InputStream noiseReductionButtonImageStream = getClass().getResourceAsStream(noiseReductionButtonIconResourceName);
-        noiseReductionToggleButtonImageView.setImage(blurRadiusPercentageImageStream != null ? new Image(noiseReductionButtonImageStream) : null);
+        noiseReductionToggleButtonImageView.setImage(noiseReductionButtonImageStream != null ? new Image(noiseReductionButtonImageStream) : null);
+
+        InputStream maxContrastButtonImageStream = getClass().getResourceAsStream(maxContrastButtonIconResourceName);
+        maxContrastToggleButtonImageView.setImage(maxContrastButtonImageStream != null ? new Image(maxContrastButtonImageStream) : null);
 
         previewConversionToggleButton.setDisable(false);
         previewBlurToggleButton.setDisable(false);
         noiseReductionToggleButton.setDisable(false);
+
+        maxContrastToggleButton.setDisable(false);
+        maxContrastToggleButton.setSelected(maxContrastActivated);
 
         maximizeToggleButton.setSelected(false);
         maximizeToggleButton.setDisable(false);
@@ -291,11 +307,12 @@ public class ConverterWindowController
                     previewConversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
                     params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    params.put(ImageConverter.ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maxContrastActivated));
                     break;
                 case BLURRED_FILTER:
                     previewConversionType = ImageConverter.ConversionType.BLURRED_FILTER;
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
-                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(maxContrastActivated));
                     break;
                 case NONE:
                 default:

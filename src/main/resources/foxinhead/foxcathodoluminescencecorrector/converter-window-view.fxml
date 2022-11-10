@@ -67,6 +67,11 @@
                 <tooltip><Tooltip text="Noise reduction. Force to black nearly-black values probably caused by dark noise."/></tooltip>
             </ToggleButton>
 
+            <ToggleButton fx:id="maxContrastToggleButton" minHeight="30" minWidth="40" prefHeight="35" prefWidth="40" textAlignment="CENTER">
+                <graphic><ImageView fx:id="maxContrastToggleButtonImageView" fitWidth="30" preserveRatio="true" /></graphic>
+                <tooltip><Tooltip text="Force max contrast. This offers a better-looking image, but it changes the luminescence response of the image, so images captured with the same tools wouldn't be comparable anymore."/></tooltip>
+            </ToggleButton>
+
         </FlowPane>
     </top>
 

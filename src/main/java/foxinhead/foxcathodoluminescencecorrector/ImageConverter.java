@@ -28,6 +28,7 @@ public class ImageConverter
         NONE
         , PARAM_SIGMA                       // double
         , NOISE_REDUCTION_ACTIVATED         // boolean
+        , MAX_CONTRAST_ACTIVATED         // boolean
     }
 
     private class ConversionCache
@@ -405,6 +406,7 @@ public class ImageConverter
     {
         double sigma = params.containsKey(ConversionParameter.PARAM_SIGMA) ? Double.parseDouble(params.get(ConversionParameter.PARAM_SIGMA)) : 0.0;
         boolean performNoiseReduction = params.containsKey(ConversionParameter.NOISE_REDUCTION_ACTIVATED) && Boolean.parseBoolean(params.get(ConversionParameter.NOISE_REDUCTION_ACTIVATED));
+        boolean maximizeContrast = params.containsKey(ConversionParameter.MAX_CONTRAST_ACTIVATED) && Boolean.parseBoolean(params.get(ConversionParameter.MAX_CONTRAST_ACTIVATED));
 
         if (source.empty())
         {
@@ -416,7 +418,7 @@ public class ImageConverter
             case GREYSCALE:
                 return ConvertToGreyScale(source);
             case CATHODO_LUMINESCENCE_CORRECTION:
-                return PerformCathodoLuminescenceCorrection(source, sigma, performNoiseReduction);
+                return PerformCathodoLuminescenceCorrection(source, sigma, performNoiseReduction, maximizeContrast);
             case BLURRED_FILTER:
                 return PerformCathodoLuminescenceCorrectionBlur(source, sigma);
             case NONE:
@@ -455,7 +457,7 @@ public class ImageConverter
         return result;
     }
 
-    private final Mat PerformCathodoLuminescenceCorrection (Mat source, double sigmaMultiplier, boolean performNoiseReduction)
+    private final Mat PerformCathodoLuminescenceCorrection (Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast)
     {
         ConversionCache cache = caches.get(ConversionType.CATHODO_LUMINESCENCE_CORRECTION);
 
@@ -463,16 +465,25 @@ public class ImageConverter
         {
             cache.clearCachedImage("vChannelDivided_0_255");
             cache.clearCachedImage("vChannelNew_0_255");
+            cache.clearCachedImage("vChannel_CorrectGamma");
             cache.clearCachedImage("result");
-// cache the parameter value that makes the cache valid
+            // cache the parameter value that makes the cache valid
             cache.setParameter(ConversionParameter.PARAM_SIGMA, Double.toString(sigmaMultiplier));
         }
         if (!cache.containsParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED) || !cache.getParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED).equals(Boolean.toString(performNoiseReduction)))
         {
             cache.clearCachedImage("vChannelNew_0_255");
+            cache.clearCachedImage("vChannel_CorrectGamma");
             cache.clearCachedImage("result");
             // cache the parameter value that makes the cache valid
             cache.setParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(performNoiseReduction));
+        }
+        if (!cache.containsParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED) || !cache.getParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED).equals(Boolean.toString(maximizeContrast)))
+        {
+            cache.clearCachedImage("vChannel_CorrectGamma");
+            cache.clearCachedImage("result");
+            // cache the parameter value that makes the cache valid
+            cache.setParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maximizeContrast));
         }
 
         if (cache.containsImage("result"))
@@ -623,17 +634,34 @@ public class ImageConverter
                 // Don't release vChannelDivided_0_255 yet, otherwise also vChannelNew_0_255 is released
             }
 
-            // in any case, remap the channel to the original vChannel Max value
-            Core.multiply(vChannelNew_0_255, new Scalar(vChannelMinMax.maxVal / 255.0), vChannelNew_0_255);
-
             cache.cacheImage("vChannelNew_0_255", vChannelNew_0_255);
+        }
+
+        // Remap the channel to the original vChannel Max value
+        Mat vChannel_CorrectGamma;
+        if (cache.containsImage("vChannel_CorrectGamma"))
+        {
+            vChannel_CorrectGamma = cache.getImage("vChannel_CorrectGamma");
+        }
+        else
+        {
+            vChannel_CorrectGamma = Mat.zeros(nRows, nCols, CvType.CV_32FC1);
+            if (maximizeContrast)
+            {
+                vChannelNew_0_255.copyTo(vChannel_CorrectGamma);
+            }
+            else
+            {
+                Core.multiply(vChannelNew_0_255, new Scalar(vChannelMinMax.maxVal / 255.0), vChannel_CorrectGamma);
+            }
+            cache.cacheImage("vChannel_CorrectGamma", vChannel_CorrectGamma);
         }
 
         // recombine channels
         Mat hsvResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
         Core.insertChannel(hChannel, hsvResult, 0);
         Core.insertChannel(sChannel, hsvResult, 1);
-        Core.insertChannel(vChannelNew_0_255, hsvResult, 2);
+        Core.insertChannel(vChannel_CorrectGamma, hsvResult, 2);
 
         Mat rgbResult = Mat.zeros(nRows, nCols, CvType.CV_32FC3);
         Imgproc.cvtColor(hsvResult, rgbResult, Imgproc.COLOR_HSV2RGB);
