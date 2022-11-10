@@ -21,6 +21,8 @@ public class ImageConverter
         , GREYSCALE
         , CATHODO_LUMINESCENCE_CORRECTION
         , BLURRED_FILTER
+        , THRESHOLD_TEST
+        , CATHODO_LUMINESCENCE_CORRECTION_THRESHOLD_TEST
     }
 
     public enum ConversionParameter
@@ -28,7 +30,8 @@ public class ImageConverter
         NONE
         , PARAM_SIGMA                       // double
         , NOISE_REDUCTION_ACTIVATED         // boolean
-        , MAX_CONTRAST_ACTIVATED         // boolean
+        , MAX_CONTRAST_ACTIVATED            // boolean
+        , THRESHOLD_TEST_VALUE              // double
     }
 
     private class ConversionCache
@@ -407,6 +410,7 @@ public class ImageConverter
         double sigma = params.containsKey(ConversionParameter.PARAM_SIGMA) ? Double.parseDouble(params.get(ConversionParameter.PARAM_SIGMA)) : 0.0;
         boolean performNoiseReduction = params.containsKey(ConversionParameter.NOISE_REDUCTION_ACTIVATED) && Boolean.parseBoolean(params.get(ConversionParameter.NOISE_REDUCTION_ACTIVATED));
         boolean maximizeContrast = params.containsKey(ConversionParameter.MAX_CONTRAST_ACTIVATED) && Boolean.parseBoolean(params.get(ConversionParameter.MAX_CONTRAST_ACTIVATED));
+        double thresholdTestValue = params.containsKey(ConversionParameter.THRESHOLD_TEST_VALUE) ? Double.parseDouble(params.get(ConversionParameter.THRESHOLD_TEST_VALUE)) : 0.0;
 
         if (source.empty())
         {
@@ -421,6 +425,10 @@ public class ImageConverter
                 return PerformCathodoLuminescenceCorrection(source, sigma, performNoiseReduction, maximizeContrast);
             case BLURRED_FILTER:
                 return PerformCathodoLuminescenceCorrectionBlur(source, sigma);
+            case THRESHOLD_TEST:
+                return PerformThresholdTest(source, thresholdTestValue);
+            case CATHODO_LUMINESCENCE_CORRECTION_THRESHOLD_TEST:
+                return PerformCathodoLuminescenceCorrectionAndThresholdTest(source, sigma, performNoiseReduction, maximizeContrast, thresholdTestValue);
             case NONE:
             default:
                 return CreateImageDuplicate(source);
@@ -460,7 +468,11 @@ public class ImageConverter
     private final Mat PerformCathodoLuminescenceCorrection (Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast)
     {
         ConversionCache cache = caches.get(ConversionType.CATHODO_LUMINESCENCE_CORRECTION);
+        return InternalPerformCathodoLuminescenceCorrection(cache, source, sigmaMultiplier, performNoiseReduction, maximizeContrast);
+    }
 
+    private final Mat InternalPerformCathodoLuminescenceCorrection (ConversionCache cache, Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast)
+    {
         if (!cache.containsParameter(ConversionParameter.PARAM_SIGMA) || !cache.getParameter(ConversionParameter.PARAM_SIGMA).equals(Double.toString(sigmaMultiplier)))
         {
             cache.clearCachedImage("vChannelDivided_0_255");
@@ -690,6 +702,59 @@ public class ImageConverter
 
         cache.cacheImage("result", result);
 
+        return result;
+    }
+
+    private final Mat PerformThresholdTest (Mat source, double thresholdValue)
+    {
+        ConversionCache cache = caches.get(ConversionType.THRESHOLD_TEST);
+        return InternalPerformThresholdTest(cache, source, thresholdValue);
+    }
+
+    private final Mat PerformCathodoLuminescenceCorrectionAndThresholdTest (Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast, double thresholdValue)
+    {
+        ConversionCache cache = caches.get(ConversionType.CATHODO_LUMINESCENCE_CORRECTION_THRESHOLD_TEST);
+        return InternalPerformThresholdTest(cache
+                ,InternalPerformCathodoLuminescenceCorrection(cache, source, sigmaMultiplier, performNoiseReduction, maximizeContrast)
+        , thresholdValue);
+    }
+
+    private final Mat InternalPerformThresholdTest (ConversionCache cache, Mat source, double thresholdValue)
+    {
+        if (!cache.containsParameter(ConversionParameter.THRESHOLD_TEST_VALUE) || !cache.getParameter(ConversionParameter.THRESHOLD_TEST_VALUE).equals(Double.toString(thresholdValue)))
+        {
+            cache.clearCachedImage("thresholdTestResult");
+            // cache the parameter value that makes the cache valid
+            cache.setParameter(ConversionParameter.THRESHOLD_TEST_VALUE, Double.toString(thresholdValue));
+        }
+        if (cache.containsImage("thresholdTestResult"))
+        {
+            return cache.getImage("thresholdTestResult");
+        }
+
+        Mat result = Mat.zeros(source.rows(), source.cols(), CvType.CV_32FC1);
+        if (!source.empty())
+        {
+            // Convert to three 32-bit float components ranging in [0-255]
+            Mat source32F = Mat.zeros(source.rows(), source.cols(), CvType.CV_32FC3);
+            source.convertTo(source32F, CvType.CV_32FC3);
+
+            // Convert in HSV (ranging in [0-255])
+            Mat hsvMat = Mat.zeros(source.rows(), source.cols(), CvType.CV_32FC3);
+            Imgproc.cvtColor(source32F, hsvMat, Imgproc.COLOR_RGB2HSV);
+            source32F.release();
+
+            // extract vChannel
+            Mat vChannel = Mat.zeros(source.rows(), source.cols(), CvType.CV_32FC1);
+            Core.extractChannel(hsvMat, vChannel, 2);
+            cache.cacheImage("vChannel", vChannel);
+            hsvMat.release();
+
+            Imgproc.threshold(vChannel, result, thresholdValue, 255.0, Imgproc.THRESH_BINARY);
+            vChannel.release();
+        }
+
+        cache.cacheImage("thresholdTestResult", result);
         return result;
     }
 

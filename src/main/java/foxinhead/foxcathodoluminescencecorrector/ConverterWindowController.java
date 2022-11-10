@@ -20,11 +20,11 @@ import java.util.*;
 
 public class ConverterWindowController
 {
-
     enum PreviewType {
         NONE
         , CONVERSION_RESULT
         , BLURRED_FILTER
+        , THRESHOLD_TEST
     }
 
     private static final String defaultSrcImageResourceName = "/icons/default_src_image.png";
@@ -32,6 +32,7 @@ public class ConverterWindowController
     private static final String brokenFileImageResourceName = "/icons/broken_file.png";
     private static final String previewConversionIconResourceName = "/icons/preview_conversion_button_icon.png";
     private static final String previewBlurIconResourceName = "/icons/preview_blur_icon.png";
+    private static final String previewThresholdIconResourceName = "/icons/preview_threshold_test.png";
     private static final String blurRadiusPercentageIconResourceName = "/icons/blur_radius_percentage_icon.png";
     private static final String noiseReductionButtonIconResourceName = "/icons/noise_reduction_icon.png";
     private static final String maxContrastButtonIconResourceName = "/icons/max_constrast_icon.png";
@@ -58,6 +59,9 @@ public class ConverterWindowController
 
     @FXML private ToggleButton previewBlurToggleButton;
     @FXML private ImageView previewBlurToggleButtonImageView;
+
+    @FXML public ToggleButton previewThresholdToggleButton;
+    @FXML public ImageView previewThresholdToggleButtonImageView;
 
     @FXML private ImageView blurRadiusPercentageImageView;
     @FXML private Slider blurRadiusPercentageSlider;
@@ -94,6 +98,9 @@ public class ConverterWindowController
     private boolean maxContrastActivated = false;
 
     private double blurFilterPercentage = blurSliderDefaultValue / 100.0;
+
+    private double thresholdTestValue = 150.0;
+
     public ConverterWindowController ()
     {
         imageConverter = new ImageConverter();
@@ -138,6 +145,10 @@ public class ConverterWindowController
         {
             refreshPreview(newValue ? PreviewType.BLURRED_FILTER : PreviewType.NONE);
         });
+        previewThresholdToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
+        {
+            refreshPreview(newValue ? PreviewType.THRESHOLD_TEST : PreviewType.NONE);
+        });
 
         noiseReductionToggleButton.selectedProperty().addListener((property, oldValue, newValue) ->
         {
@@ -178,6 +189,8 @@ public class ConverterWindowController
 
         InputStream previewBlurButtonImageStream = getClass().getResourceAsStream(previewBlurIconResourceName);
         previewBlurToggleButtonImageView.setImage(previewBlurButtonImageStream != null ? new Image(previewBlurButtonImageStream) : null);
+        InputStream previewThresholdButtonImageStream = getClass().getResourceAsStream(previewThresholdIconResourceName);
+        previewThresholdToggleButtonImageView.setImage(previewThresholdButtonImageStream != null ? new Image(previewThresholdButtonImageStream) : null);
 
         InputStream blurRadiusPercentageImageStream = getClass().getResourceAsStream(blurRadiusPercentageIconResourceName);
         blurRadiusPercentageImageView.setImage(blurRadiusPercentageImageStream != null ? new Image(blurRadiusPercentageImageStream) : null);
@@ -190,6 +203,7 @@ public class ConverterWindowController
 
         previewConversionToggleButton.setDisable(false);
         previewBlurToggleButton.setDisable(false);
+        previewThresholdToggleButton.setDisable(false);
         noiseReductionToggleButton.setDisable(false);
 
         maxContrastToggleButton.setDisable(false);
@@ -252,17 +266,42 @@ public class ConverterWindowController
     {
         currentFileIndex = -1;
 
-        InputStream srcImageInputStream = null;
         if (index >= 0 && index < fileManager.getFilesCount())
         {
             currentFileIndex = index;
+        }
+
+        refreshCurrentFileSourcePreview();
+        refreshCurrentFileConvertedPreview();
+
+        resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
+        resetMaximizedImagesPadding();
+
+        firstButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
+        previousButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
+        nextButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
+        lastButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
+    }
+
+    private void refreshCurrentFileSourcePreview() throws IOException
+    {
+        InputStream srcImageInputStream = null;
+        if (currentFileIndex >= 0 && currentFileIndex < fileManager.getFilesCount())
+        {
+            ImageConverter.ConversionType previewConversionType = ImageConverter.ConversionType.NONE;
+            Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
+            if (previewType == PreviewType.THRESHOLD_TEST)
+            {
+                previewConversionType = ImageConverter.ConversionType.THRESHOLD_TEST;
+                params.put(ImageConverter.ConversionParameter.THRESHOLD_TEST_VALUE, Double.toString(thresholdTestValue));
+            }
 
             try
             {
                 // use a preview type here because the image is only shown in UI. This type is not the one of
                 // the saved image (the image will be converted again at save time), neither the one of the source
                 // image. Its purpose is just to allow the java UI to work correctly.
-                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, ImageConverter.ConversionType.NONE, previewImageType, new HashMap<>(), (int)Math.round(srcImageDesiredSize[0]), (int)Math.round(srcImageDesiredSize[1]));
+                srcImageInputStream = fileManager.getConvertedImageInputStream(currentFileIndex, previewConversionType, previewImageType, params, (int)Math.round(srcImageDesiredSize[0]), (int)Math.round(srcImageDesiredSize[1]));
             }
             catch (IllegalArgumentException e)
             {
@@ -285,24 +324,22 @@ public class ConverterWindowController
 
         Image sourceImage = new Image(srcImageInputStream);
         sourceImageView.setImage(sourceImage);
-
-        refreshCurrentFileIndexPreview();
-
-        resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
-        resetMaximizedImagesPadding();
-
-        firstButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
-        previousButton.setDisable(fileManager.getFileAtIndex(currentFileIndex - 1) == null);
-        nextButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
-        lastButton.setDisable(fileManager.getFileAtIndex(currentFileIndex + 1) == null);
     }
 
-    private void refreshCurrentFileIndexPreview() throws IOException {
+    private void refreshCurrentFileConvertedPreview() throws IOException
+    {
         InputStream dstImageInputStream = null;
         if (currentFileIndex >= 0 && currentFileIndex < fileManager.getFilesCount()) {
             ImageConverter.ConversionType previewConversionType = ImageConverter.ConversionType.NONE;
             Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
             switch (previewType) {
+                case THRESHOLD_TEST:
+                    previewConversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION_THRESHOLD_TEST;
+                    params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    params.put(ImageConverter.ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maxContrastActivated));
+                    params.put(ImageConverter.ConversionParameter.THRESHOLD_TEST_VALUE, Double.toString(thresholdTestValue));
+                    break;
                 case CONVERSION_RESULT:
                     previewConversionType = ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION;
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
@@ -316,7 +353,6 @@ public class ConverterWindowController
                     break;
                 case NONE:
                 default:
-                    previewConversionType = ImageConverter.ConversionType.NONE;
                     break;
             }
 
@@ -437,7 +473,8 @@ public class ConverterWindowController
 
     private void resetMaximizedImagesPadding()
     {
-
+        horizontalScrollBar.setValue(0);
+        verticalScrollBar.setValue(0);
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -842,17 +879,22 @@ public class ConverterWindowController
 
             previewConversionToggleButton.setSelected(newPreviewType == PreviewType.CONVERSION_RESULT);
             previewBlurToggleButton.setSelected(newPreviewType == PreviewType.BLURRED_FILTER);
+            previewThresholdToggleButton.setSelected(newPreviewType == PreviewType.THRESHOLD_TEST);
             noiseReductionToggleButton.setSelected(noiseReductionActivated);
 
             previewType = newPreviewType;
 
             try
             {
-                refreshCurrentFileIndexPreview(); // refresh preview image
+                refreshCurrentFileSourcePreview(); // refresh source preview
+            } catch (IOException e) { throw new RuntimeException(e); }
+
+            try
+            {
+                refreshCurrentFileConvertedPreview(); // refresh converted preview
             } catch (IOException e) { throw new RuntimeException(e); }
 
             resizeImages(imagesPane.getWidth(), imagesPane.getHeight());
-            resetMaximizedImagesPadding();
 
             refreshingPreview = false;
         }

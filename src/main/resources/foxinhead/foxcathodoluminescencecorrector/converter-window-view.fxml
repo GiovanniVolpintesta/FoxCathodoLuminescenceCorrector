@@ -9,7 +9,7 @@
 <BorderPane xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="foxinhead.foxcathodoluminescencecorrector.ConverterWindowController"
             fx:id="mainPane"
-            minWidth="500" minHeight="160"
+            minWidth="550" minHeight="160"
 >
     <top>
         <FlowPane BorderPane.alignment="TOP_LEFT" minWidth="650" hgap="5" vgap="5">
@@ -35,7 +35,7 @@
                 <tooltip><Tooltip text="Activate to see the images at real size, inside a scrolling viewport."/></tooltip>
             </ToggleButton>
 
-            <FlowPane minWidth="100" prefWidth="100" hgap="5" vgap="5">
+            <FlowPane minWidth="150" prefWidth="150" hgap="5" vgap="5">
                 <FlowPane.margin>
                     <Insets left="20" right="20" />
                 </FlowPane.margin>
@@ -48,6 +48,11 @@
                 <ToggleButton fx:id="previewBlurToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" textAlignment="CENTER">
                     <graphic><ImageView fx:id="previewBlurToggleButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
                     <tooltip><Tooltip text="Activate to see the blur filter preview."/></tooltip>
+                </ToggleButton>
+
+                <ToggleButton fx:id="previewThresholdToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" textAlignment="CENTER">
+                    <graphic><ImageView fx:id="previewThresholdToggleButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                    <tooltip><Tooltip text="Activate to test the converted image using a threshold."/></tooltip>
                 </ToggleButton>
             </FlowPane>
 
