@@ -9,7 +9,7 @@
 <BorderPane xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="foxinhead.foxcathodoluminescencecorrector.ConverterWindowController"
             fx:id="mainPane"
-            minWidth="500" minHeight="160"
+            minWidth="700" minHeight="160"
 >
     <top>
         <FlowPane BorderPane.alignment="TOP_LEFT" minWidth="650" hgap="5" vgap="5">
@@ -25,8 +25,6 @@
             <Button fx:id="lastButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onLastImageButtonClick" text="&#x2b9e;&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
             <Button fx:id="saveButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onSaveButtonClick" text="&#x1F4BE;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
 
-            <Separator />
-
             <ToggleButton fx:id="maximizeToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" text="&#x1F50D;" textAlignment="CENTER">
                 <FlowPane.margin>
                     <Insets left="20" right="20" />
@@ -35,7 +33,7 @@
                 <tooltip><Tooltip text="Activate to see the images at real size, inside a scrolling viewport."/></tooltip>
             </ToggleButton>
 
-            <FlowPane minWidth="100" prefWidth="100" hgap="5" vgap="5">
+            <FlowPane minWidth="150" prefWidth="150" hgap="5" vgap="5">
                 <FlowPane.margin>
                     <Insets left="20" right="20" />
                 </FlowPane.margin>
@@ -49,24 +47,42 @@
                     <graphic><ImageView fx:id="previewBlurToggleButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
                     <tooltip><Tooltip text="Activate to see the blur filter preview."/></tooltip>
                 </ToggleButton>
+
+                <ToggleButton fx:id="previewThresholdToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" textAlignment="CENTER">
+                    <graphic><ImageView fx:id="previewThresholdToggleButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                    <tooltip><Tooltip text="Activate to test the converted image using a threshold."/></tooltip>
+                </ToggleButton>
             </FlowPane>
 
-            <FlowPane minWidth="180" prefWidth="180" hgap="5" vgap="5">
-                <FlowPane.margin>
-                    <Insets right="20" />
-                </FlowPane.margin>
-                <Slider fx:id="blurRadiusPercentageSlider" minWidth="100" prefWidth="100"
-                        min="0" max="100" showTickLabels="true" showTickMarks="true" blockIncrement="10" majorTickUnit="50" >
-                <tooltip><Tooltip text="Blur filter radius (represented in percentage on the image size). The blurred filter should reproduce the radiation gradient with as much precision as possible, but it should also dissolve larger grains. Activate the blur filter preview to see the filter computed for the current image."/></tooltip></Slider>
-                <ImageView fx:id="blurRadiusPercentageImageView" fitWidth="40" preserveRatio="true"/>
-                <Label fx:id="blurRadiusPercentageText" minWidth="30" prefWidth="30"/>
+            <FlowPane minWidth="700" prefWidth="700" hgap="20" vgap="5">
+                <FlowPane minWidth="90" prefWidth="90" hgap="5" vgap="5">
+                    <ToggleButton fx:id="noiseReductionToggleButton" minHeight="30" minWidth="40" prefHeight="35" prefWidth="40" textAlignment="CENTER">
+                        <graphic><ImageView fx:id="noiseReductionToggleButtonImageView" fitWidth="25" preserveRatio="true" /></graphic>
+                        <tooltip><Tooltip text="Noise reduction. Force to black nearly-black values probably caused by dark noise."/></tooltip>
+                    </ToggleButton>
+
+                    <ToggleButton fx:id="maxContrastToggleButton" minHeight="30" minWidth="40" prefHeight="35" prefWidth="40" textAlignment="CENTER">
+                        <graphic><ImageView fx:id="maxContrastToggleButtonImageView" fitWidth="30" preserveRatio="true" /></graphic>
+                        <tooltip><Tooltip text="Force max contrast. This offers a better-looking image, but it changes the luminescence response of the image, so images captured with the same tools wouldn't be comparable anymore."/></tooltip>
+                    </ToggleButton>
+                </FlowPane>
+
+                <FlowPane minWidth="280" prefWidth="180" hgap="5" vgap="5">
+                    <Slider fx:id="blurRadiusPercentageSlider" minWidth="200" prefWidth="200"
+                            min="0" max="100" showTickLabels="true" showTickMarks="true" blockIncrement="1" majorTickUnit="25" >
+                    <tooltip><Tooltip text="Blur filter radius (represented in percentage on the image size). The blurred filter should reproduce the radiation gradient with as much precision as possible, but it should also dissolve larger grains. Activate the blur filter preview to see the filter computed for the current image."/></tooltip></Slider>
+                    <ImageView fx:id="blurRadiusPercentageImageView" fitWidth="40" preserveRatio="true"/>
+                    <Label fx:id="blurRadiusPercentageText" minWidth="30" prefWidth="30"/>
+                </FlowPane>
+
+                <FlowPane minWidth="280" prefWidth="280" hgap="5" vgap="5">
+                    <Slider fx:id="thresholdTestHandlerSlider" minWidth="200" prefWidth="200"
+                            min="0" max="255" showTickLabels="true" showTickMarks="true" blockIncrement="1" majorTickUnit="64" >
+                        <tooltip><Tooltip text="Handler for the threshold value of the threshold test. Activate the threshold test preview to see the result."/></tooltip></Slider>
+                    <ImageView fx:id="thresholdTestHandlerImageView" fitWidth="40" preserveRatio="true"/>
+                    <Label fx:id="thresholdTestHandlerText" minWidth="30" prefWidth="30"/>
+                </FlowPane>
             </FlowPane>
-
-            <ToggleButton fx:id="noiseReductionToggleButton" minHeight="30" minWidth="40" prefHeight="35" prefWidth="40" textAlignment="CENTER">
-                <graphic><ImageView fx:id="noiseReductionToggleButtonImageView" fitWidth="25" preserveRatio="true" /></graphic>
-                <tooltip><Tooltip text="Noise reduction. Force to black nearly-black values probably caused by dark noise."/></tooltip>
-            </ToggleButton>
-
         </FlowPane>
     </top>
 
