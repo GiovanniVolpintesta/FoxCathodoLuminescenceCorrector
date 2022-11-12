@@ -32,7 +32,7 @@ build/*
 
 # GIMP projects 
 # Images are already inside ./src/main/resources/icons
-# GIMP/*
+GIMP/*
 
 # ----------------------- IntelliJ -----------------------
 
