@@ -36,10 +36,6 @@ GIMP/*
 
 # ----------------------- IntelliJ -----------------------
 
-# Downloaded libraries from Maven 
-# (ignored to avoid license problems caused by redistribution)
-.idea/libraries/*
-
 # IntelliJ artifacts (artifacts, etc.)
 out/*
 
@@ -47,6 +43,22 @@ out/*
 # contains already ignored .class files,
 # but also resources files already included in ./src directory
 target/*
+
+# Downloaded libraries from Maven 
+# (ignored to avoid license problems caused by redistribution)
+.idea/libraries/*
+
+# I use a custom batch file to create the package
+# So the artifacts configuration is ignored
+.idea/artifacts/*
+
+# Files to ignore, according to IntelliJ documentation. Source:  https://intellij-support.jetbrains.com/hc/en-us/articles/206544839-How-to-manage-projects-under-Version-Control-Systems
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf
+*.iml
+.idea/modules.xml
+# gradle.xml
 
 # ----------------------- Notepad++ -----------------------
 
