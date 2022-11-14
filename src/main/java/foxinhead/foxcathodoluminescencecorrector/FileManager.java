@@ -4,11 +4,14 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class FileManager
 {
     private File workingDirectory;
     private File[] candidateFiles;
+
+    private final ImageConverter imageConverter;
 
     public static String getFileType(File f)
     {
@@ -23,16 +26,17 @@ public class FileManager
         return "";
     }
 
-    public static boolean isFileInputSupported (File f) { return f != null && ImageConverter.isTypeSupportedAsInput(getFileType(f)); }
-    public static boolean isFileOutputSupported (File f) { return f != null && ImageConverter.isTypeSupportedAsOutput(getFileType(f)); }
+    public boolean isFileInputSupported (File f) { return f != null && imageConverter.isTypeSupportedAsInput(getFileType(f)); }
+    public boolean isFileOutputSupported (File f) { return f != null && imageConverter.isTypeSupportedAsOutput(getFileType(f)); }
 
-    public FileManager (File initialWorkingDirectory)
+    public FileManager (File initialWorkingDirectory, ImageConverter imageConverter)
     {
-        workingDirectory = initialWorkingDirectory;
+        this.workingDirectory = initialWorkingDirectory;
+        this.imageConverter = imageConverter;
     }
-    public FileManager()
+    public FileManager(ImageConverter imageConverter)
     {
-        this(null);
+        this(null, imageConverter);
     }
 
     public File getWorkingDirectory() { return workingDirectory; }
@@ -71,37 +75,40 @@ public class FileManager
         }
     }
 
-    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType) throws IllegalArgumentException
+    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, String outputType, Map<ImageConverter.ConversionParameter, String> params, int desiredWidth, int desiredHeight) throws IllegalArgumentException
     {
         File file = getFileAtIndex(fileIndex);
         if (file != null && file.exists())
         {
-            return ImageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, outputType);
+            return imageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, outputType, params, desiredWidth, desiredHeight);
         }
         return null;
     }
 
-    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType)
+    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params, int desiredWidth, int desiredHeight)
     {
         File file = getFileAtIndex(fileIndex);
         if (file != null)
         {
-            return ImageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType);
+            return imageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, params, desiredWidth, desiredHeight);
         }
         return null;
     }
 
-    public void convertAndSaveFile (File srcFile, File dstFile, ImageConverter.ConversionType conversionType) throws IOException, IllegalArgumentException, UnsupportedEncodingException
+    public void convertAndSaveFile (File srcFile, File dstFile, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params) throws IOException, IllegalArgumentException, UnsupportedEncodingException
     {
         if (srcFile != null && dstFile != null
                 && !srcFile.isDirectory() && !dstFile.isDirectory())
         {
             if (!isFileInputSupported(srcFile))
             {
-                throw new UnsupportedEncodingException("The source file has not a supported encoding. Only the following encodings are supported: " + Arrays.toString(ImageConverter.getInputFileFilters()));
+                throw new UnsupportedEncodingException("The source file has not a supported encoding. Only the following encodings are supported: " + Arrays.toString(imageConverter.getInputFileFilters()));
             }
 
-            InputStream convertedImage = ImageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile));
+            // clear conversion cache: the conversion result (saved) should not be affected by cached settings such as the images size, which are used to compute the preview images.
+            imageConverter.clearConvertionCache(conversionType);
+
+            InputStream convertedImage = imageConverter.convertImageInMemory(srcFile.getAbsolutePath(), conversionType, getFileType(dstFile), params, -1, -1);
             if (convertedImage == null || convertedImage.available() == 0)
             {
                 if (convertedImage != null)

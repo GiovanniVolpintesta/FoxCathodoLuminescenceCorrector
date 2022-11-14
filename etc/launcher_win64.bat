@@ -22,8 +22,8 @@ set JAVA_NATIVE_LIBRARIES_PATH="C:\Program Files\Java\openjdk-18.0.2.1\bin"
 
 :: Path of the javafx binary files
 :: Used if USE_CUSTOM_RUNTIME_IMAGE is not 1.
-set JAVAFX_LIB_PATH="C:\Program Files\Java\javafx-sdk-17.0.1\lib"
-set JAVAFX_NATIVE_LIBRARIES_PATH="C:\Program Files\Java\javafx-sdk-17.0.1\bin"
+set JAVAFX_LIB_PATH="C:\Program Files\Java\javafx-sdk-19\lib"
+set JAVAFX_NATIVE_LIBRARIES_PATH="C:\Program Files\Java\javafx-sdk-19\bin"
 
 :: Path to the OpenCV jar file built for java bindings
 set OPENCV_JAR_PATH=".\opencv\opencv-440.jar"

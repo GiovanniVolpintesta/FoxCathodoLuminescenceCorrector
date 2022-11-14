@@ -7,9 +7,9 @@ set JAVA_JMODS_PATH=%JAVA_LIB_PATH%
 set OPENCV_LIB_PATH="C:\Program Files\opencv-4.4.0\build\java\opencv-440.jar"
 set OPENCV_NATIVE_LIBRARY_DIR="C:\Program Files\opencv-4.4.0\build\java\x64"
 
-:: set JAVAFX_NATIVE_LIBRARY_DIR="C:\Program Files\Java\javafx-sdk-17.0.1\bin"
-set JAVAFX_LIB_PATH="C:\Program Files\Java\javafx-sdk-17.0.1\lib"
-set JAVAFX_JMODS_PATH="C:\Program Files\Java\javafx-sdk-17.0.1\jmods"
+:: set JAVAFX_NATIVE_LIBRARY_DIR="C:\Program Files\Java\javafx-sdk-19\bin"
+set JAVAFX_LIB_PATH="C:\Program Files\Java\javafx-sdk-19\lib"
+set JAVAFX_JMODS_PATH="C:\Program Files\Java\javafx-sdk-19\jmods"
 
 set PROJECT_RESOURCES_DIR="src\main\resources"
 set LAUNCHER_PATH="etc\launcher_win64.bat"
