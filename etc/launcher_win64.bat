@@ -34,7 +34,7 @@ set OPENCV_JAR_PATH=".\opencv\opencv-440.jar"
 set OPENCV_NATIVE_LIBRARY_DIR=".\opencv\x64"
 
 :: Path of the program jar
-set PROGRAM_JAR_PATH=".\FoxCathodoLuminescenceCorrector.jar"
+set PROGRAM_JAR_PATH=".\IBBIC.jar"
 
 :: If present, the custom runtime image contains Java SE and JavaFX modules.
 :: OpenCV modules are not included because its .jar library is not modular, and it cannot be exported to a .jmod file.
@@ -54,8 +54,8 @@ if %USE_CUSTOM_RUNTIME_IMAGE%==1 (set JAVA_LIBRARY_PATH=%CUSTOM_RUNTIME_IMAGE_BI
 else (set JAVA_LIBRARY_PATH=%JAVA_NATIVE_LIBRARIES_PATH%;%JAVAFX_NATIVE_LIBRARIES_PATH%)
 set JAVA_LIBRARY_PATH=%JAVA_LIBRARY_PATH%;%OPENCV_NATIVE_LIBRARY_DIR%
 
-set MAIN_MODULE=foxinhead.foxcathodoluminescencecorrector
-set MAIN_CLASS=foxinhead.foxcathodoluminescencecorrector.ConverterApplication
+set MAIN_MODULE=com.volpintesta.IBBIC
+set MAIN_CLASS=com.volpintesta.IBBIC.ConverterApplication
 
 echo JAVA_PATH = %JAVA_PATH%
 echo MODULE_PATH = %MODULE_PATH%

@@ -4,10 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>foxinhead.foximageconverter</groupId>
-    <artifactId>FoxImageConverter</artifactId>
+    <groupId>com.volpintesta.IBBIC</groupId>
+    <artifactId>IBBIC</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>FoxImageConverter</name>
+    <name>IBBIC</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,7 +61,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                foxinhead.foxcathodoluminescencecorrector.foximageconverter/foxinhead.foxcathodoluminescencecorrector.tests.HelloApplication
+                                com.volpintesta.IBBIC/com.volpintesta.IBBIC.ConverterApplication
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>

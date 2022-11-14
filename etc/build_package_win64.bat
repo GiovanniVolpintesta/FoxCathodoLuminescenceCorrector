@@ -20,7 +20,7 @@ set OPENCV_LIB_BUILD_PATH=".\opencv"
 set OPENCV_NATIVE_LIBRARY_DIR_BUILD_PATH=".\opencv\x64"
 set LAUNCHER_BUILD_PATH=".\launcher.bat"
 
-set BUILD_JAR_NAME=FoxCathodoLuminescenceCorrector.jar
+set BUILD_JAR_NAME=IBBIC.jar
 set CUSTOM_JAVA_RUNTIME_DIR=".\java_runtime"
 
 :: cache the current directory and move to the batch directory
@@ -61,8 +61,8 @@ FOR /F "tokens=*" %%a in (classDirsToDelete.txt) do rmdir /S /Q "%%a"
 cd ..
 
 :: create the jar, packing class files and resources
-%JAVA_PATH%\jar --create --verbose --file FoxCathodoLuminescenceCorrector.jar ^
---main-class foxinhead.foxcathodoluminescencecorrector.ConverterApplication ^
+%JAVA_PATH%\jar --create --verbose --file IBBIC.jar ^
+--main-class com.volpintesta.IBBIC.ConverterApplication ^
 -C .\temp\classes .
 
 :: copy the opencv library and its native library
