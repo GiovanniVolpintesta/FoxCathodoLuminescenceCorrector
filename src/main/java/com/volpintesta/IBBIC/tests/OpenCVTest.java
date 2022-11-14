@@ -1,4 +1,4 @@
-package foxinhead.foxcathodoluminescencecorrector.tests;
+package com.volpintesta.IBBIC.tests;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;

@@ -6,11 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="FoxCathodoLuminescenceCorrector" />
+        <module name="IBBIC" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="FoxCathodoLuminescenceCorrector" target="17" />
+      <module name="IBBIC" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>

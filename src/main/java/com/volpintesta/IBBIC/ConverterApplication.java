@@ -1,4 +1,4 @@
-package foxinhead.foxcathodoluminescencecorrector;
+package com.volpintesta.IBBIC;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

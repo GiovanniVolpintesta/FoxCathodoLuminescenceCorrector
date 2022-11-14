@@ -1,4 +1,4 @@
-package foxinhead.foxcathodoluminescencecorrector;
+package com.volpintesta.IBBIC;
 
 import org.opencv.core.*;
 
