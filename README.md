@@ -1,8 +1,8 @@
 # Inhomogeneous Beam Brightness Intensity Converter (IBBIC)
 
-Copyright © 2022, Giovanni Volpintesta, all rights reserved.
+Copyright © 2022-2023, Giovanni Volpintesta, all rights reserved.
 
-Copyright © 2022, Francesco Volpintesta, all rights reserved.
+Copyright © 2022-2023, Francesco Volpintesta, all rights reserved.
 
 By downloading, copying, installing or using the software you agree
 to the license agreement written in the attached "LICENSE.txt" file.
