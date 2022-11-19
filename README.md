@@ -1,5 +1,12 @@
 # Inhomogeneous Beam Brightness Intensity Converter (IBBIC)
 
+Copyright © 2022, Giovanni Volpintesta, all rights reserved.
+Copyright © 2022, Francesco Volpintesta, all rights reserved.
+
+By downloading, copying, installing or using the software you agree
+to the license agreement written in the attached "LICENSE.txt" file.
+If you do not agree to that license, do not download, install,
+copy or use the software.
 
 ## Introduction
 
@@ -20,33 +27,6 @@ image format. In this case, the conversion parameters will be applied to all the
 preview type (obviously) won't influence the saved images, which are always results of the conversion
 discussed in the article.
 
-
-## License agreement and copyright
-
-By downloading, copying, installing or using the software you agree to this license.
-If you do not agree to this license, do not download, install,
-copy or use the software.
-
-License agreement for
-Inhomogeneous Beam Brightness Intensity Converter (IBBIC)
-
-Copyright © 2022, Giovanni Volpintesta, all rights reserved.
-Copyright © 2022, Francesco Volpintesta, all rights reserved.
-
-This sofware, in source and binary forms, including, but not limited to, any code, program,
-documentation, graphic and accessory material, is provided only for evaluation purposes.
-Redistribution in source and binary forms, with or without modification, is not permitted.
-
-This software is provided by the copyright holders and contributors "as is" and
-any express or implied warranties, including, but not limited to, the implied
-warranties of merchantability and fitness for a particular purpose are disclaimed.
-In no event shall copyright holders or contributors be liable for any direct,
-indirect, incidental, special, exemplary, or consequential damages
-(including, but not limited to, procurement of substitute goods or services;
-loss of use, data, or profits; or business interruption) however caused
-and on any theory of liability, whether in contract, strict liability,
-or tort (including negligence or otherwise) arising in any way out of
-the use of this software, even if advised of the possibility of such damage.
 
 
 ## User Guide
