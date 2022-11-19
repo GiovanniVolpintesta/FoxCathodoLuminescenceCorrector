@@ -4,7 +4,7 @@ Copyright © 2022-2023, Giovanni Volpintesta, all rights reserved.
 
 Copyright © 2022-2023, Francesco Volpintesta, all rights reserved.
 
-By downloading, copying, installing or using the software you agree
+By downloading, copying, installing, or using the software, you agree
 to the license agreement written in the attached "LICENSE.txt" file.
 If you do not agree to that license, do not download, install,
 copy or use the software.
@@ -28,7 +28,7 @@ the directory.
 
 Finally, the open image or all the images inside the open directory can be converted and saved in the same
 image format. In this case, the conversion parameters will be applied to all the images, but the selected
-preview type (obviously) won't influence the saved images, which are always results of the conversion
+preview type (obviously) won't influence the saved images, which are always the results of the conversion
 discussed in the article.
 
 
@@ -37,22 +37,22 @@ discussed in the article.
 
 ### How to install:
 
-1) Extract the program zip inside a directory of your chose.
-	- NOTE 1: If you are not a developer, but a standard user, the zip you downloaded should contain onlyan "IBBIC.jar" file and some ".bat" and text files.
-		If this is not the case, you have downloaded the source project, which should be built, instead than a released package, which can be executed.
+1) Extract the program zip file into a directory of your chose.
+	- NOTE 1: If you are not a developer, but a standard user, the zip file you downloaded should contain only an "IBBIC.jar" file and some ".bat" and text files.
+		If this is not the case, you have downloaded the source project, which should be built, instead of a released package, which can be executed.
 		Try to download a release package.	
-	- NOTE 2: Only Windows 64 bit packages are provided.
-		Both these packages and this user guide should be compatible with Windows 32 bit, but it has not been tested.
-		If you are using a different operating system, you should build the package on your own, using the develoepr guide.
+	- NOTE 2: Only Windows 64-bit packages are provided.
+		Both these packages and this user guide should be compatible with Windows 32-bit, but this has not been tested.
+		If you are using a different operating system, you should build the package on your own, using the developer guide.
 
-2) Download Java from the following websites.
+2) Download Java from the following website:
 	- Oracle JRE (under Oracle Technology Network license): https://www.java.com/it/download/
 
-3) Download a Java FX from any of the following websites.
+3) Download a Java FX from any of the following websites:
 	- Oracle Java FX: https://wiki.openjdk.org/display/OpenJFX
 	- Gluon Java FX: https://openjfx.io/
 
-4) Download OpenCV from the following website.
+4) Download OpenCV from the following website:
 	- OpenCV: https://opencv.org/releases/
 		
 5) Install the three downloaded libraries, or extract their compressed archives.
@@ -64,7 +64,7 @@ discussed in the article.
 
 ### How to run:
 		
-If you correctly completed the install passages, you'll be able to launch the program simply double-clicking the "launcher_win64.bat" file.
+If you correctly completed the install passages, you'll be able to launch the program by simply double-clicking the "launcher_win64.bat" file.
 
 
 ## Developer Guide
@@ -74,9 +74,9 @@ If you correctly completed the install passages, you'll be able to launch the pr
 1) Fork or download the project.
 	- Mind that only Windows build scripts are currently included in the project, so you should "translate" them on you own
 		if you want to compile the project using another operating system.
-	- The source code and the graphic resources are inside "src" subdirectory.
-	- The build scripts are under "etc" subdirectory and include:
-		- setup_installation_directories_win64.bat: a script used to set the libraries installation paths inside some environment variables.
+	- The source code and the graphic resources are inside the "src" subdirectory.
+	- The build scripts are under the "etc" subdirectory and include:
+		- setup_installation_directories_win64.bat: a script used to set the library installation paths inside some environment variables.
 		- set_environment_variables_win64.bat: a script used to set all the common environment variables used in the build and launch scripts.
 		- build_jar_win64: a script used to build the final jar and to copy inside the build directory the necessary launcher scripts.
 		- launcher_win64: a script used to launch the built jar.
@@ -96,10 +96,10 @@ If you correctly completed the install passages, you'll be able to launch the pr
 5) Open the file "setup_installation_directories_win64.bat" inside the "etc" subdirectory
 	and type the actual installation paths of the three libraries.
 	- If you are working in an operating system different than Windows, use the informations in passage 1
-		to understand the purpose of each script, and "translate" them on you own.
+		to understand the purpose of each script, and "translate" them on your own.
 		
 6) Double-click on the "build_jar_win64.bat" file to build the project.
 
 ### How to run:
 		
-If you correctly completed the install passages, you'll be able to launch the program simply double-clicking the "launcher_win64.bat" file.
+If you correctly completed the install passages, you'll be able to launch the program by simply double-clicking the "launcher_win64.bat" file.
