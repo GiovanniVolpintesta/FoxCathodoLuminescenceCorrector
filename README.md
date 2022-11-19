@@ -1,8 +1,8 @@
 # Inhomogeneous Beam Brightness Intensity Converter (IBBIC)
 
-Copyright © 2022-2023, Giovanni Volpintesta, all rights reserved.
-
 Copyright © 2022-2023, Francesco Volpintesta, all rights reserved.
+
+Copyright © 2022-2023, Giovanni Volpintesta, all rights reserved.
 
 By downloading, copying, installing, or using the software, you agree
 to the license agreement written in the attached "LICENSE.txt" file.
@@ -13,7 +13,8 @@ copy or use the software.
 
 This software is written to demonstrate the image analysis process discussed in the article
 "Inhomogeneous Beam Brightness Intensity Converter (IBBIC) as aid for cathodoluminescence
-microscopy studies and images pre-processing", written by Francesco Volpintesta.
+microscopy studies and images pre-processing", written by Francesco Volpintesta
+and Giovanni Volpintesta.
 
 This software lets the user open an image and visualize the conversion discussed in the article.
 
@@ -60,7 +61,7 @@ discussed in the article.
 
 6) Open the file "setup_installation_directories_win64.bat" from this program directory and type the actual installation paths of the three libraries.
 	- NOTE: You should not double-click this file.
-		You should open it with a simple text editor, such as Notepad or Notepad++, edit it, and save it again with the same extension.
+		You should open it with a simple text editor, such as Notepad or Notepad++, edit it, and save it again with the same name and extension.
 
 ### How to run:
 		
@@ -78,8 +79,8 @@ If you correctly completed the install passages, you'll be able to launch the pr
 	- The build scripts are under the "etc" subdirectory and include:
 		- setup_installation_directories_win64.bat: a script used to set the library installation paths inside some environment variables.
 		- set_environment_variables_win64.bat: a script used to set all the common environment variables used in the build and launch scripts.
-		- build_jar_win64: a script used to build the final jar and to copy inside the build directory the necessary launcher scripts.
-		- launcher_win64: a script used to launch the built jar.
+		- build_jar_win64.bat: a script used to build the final jar and to copy inside the build directory the necessary launcher scripts.
+		- launcher_win64.bat: a script used to launch the built jar.
 		- launcher_bats_filename_list.txt: a list of scripts that should be copied in the build directory (the launcher scripts, and its dependencies).
 	
 2) Download and install/unzip the Java JDK from any of the following websites.
