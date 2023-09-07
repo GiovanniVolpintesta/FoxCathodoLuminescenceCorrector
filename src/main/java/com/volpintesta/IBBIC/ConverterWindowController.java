@@ -16,10 +16,15 @@ import javafx.stage.Window;
 import javafx.util.StringConverter;
 
 import java.io.*;
+import java.security.Timestamp;
+import java.text.*;
+import java.time.*;
 import java.util.*;
 
 public class ConverterWindowController
 {
+    static boolean doBenchmark = false; // set to true to print benchmarks
+    static DateFormat dateFormat = new SimpleDateFormat("hh:mm:ss.SSS");
     enum PreviewType {
         NONE
         , CONVERSION_RESULT
@@ -640,7 +645,7 @@ public class ConverterWindowController
         int handledConflict = 0;
 
         Boolean confirmedTypeChange = null;
-        
+
         // retrieve all the files to save and all the output files
         // if any output file already exists, add the source file to a conflicts list
         // that will be handled before the conversion operations.
@@ -754,10 +759,13 @@ public class ConverterWindowController
             }
         }
 
+        long startAllConversionsMillisecs = System.currentTimeMillis();
+
         // Do the conversions and save the files.
         // If any error is thrown during these operations, the file is added to a list
         // of not handled errors that will be shown at the end
         ArrayList<File> errorFilesList = new ArrayList<>();
+        int convertedFiles = 0;
         for (File srcFile : filePairs.keySet())
         {
             if (!skippedFiles.contains(srcFile))
@@ -778,7 +786,11 @@ public class ConverterWindowController
                     // only supported types (see FileManager.setupFiles).
                     Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    long startConversionMillisecs = System.currentTimeMillis();
                     fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
+                    convertedFiles++;
+                    long endConversionMillisecs = System.currentTimeMillis();
+                    if (doBenchmark) System.out.println("Conversion "+convertedFiles+" time: "+dateFormat.format(Date.from(Instant.ofEpochMilli(endConversionMillisecs - startConversionMillisecs))));
                 }
                 catch (IOException e)
                 {
@@ -790,6 +802,9 @@ public class ConverterWindowController
                 }
             }
         }
+
+        long endAllConversionsMillisecs = System.currentTimeMillis();
+        if (doBenchmark) System.out.println("Conversion "+convertedFiles+" time: "+dateFormat.format(Date.from(Instant.ofEpochMilli(endAllConversionsMillisecs - startAllConversionsMillisecs))));
 
         String endPopupMsg = errorFilesList.isEmpty()
                 ? "Conversion ended with success for all the files."
