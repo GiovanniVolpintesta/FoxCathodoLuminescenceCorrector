@@ -498,6 +498,13 @@ public class ImageConverter
             cache.setParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maximizeContrast));
         }
 
+        // Uncomment to debug conversion parameters
+        // System.out.println(cache.params);
+        // System.out.println("sigmaMultiplier " + sigmaMultiplier);
+        // System.out.println("performNoiseReduction " + performNoiseReduction);
+        // System.out.println("maximizeContrast " + maximizeContrast);
+        // System.out.println("---------------");
+
         if (cache.containsImage("result"))
         {
             return cache.getImage("result");

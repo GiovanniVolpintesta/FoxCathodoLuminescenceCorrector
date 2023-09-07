@@ -581,6 +581,8 @@ public class ConverterWindowController
                     // IllegalArgumentException should never be called because the extension is checked previously in this method.
                     Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    params.put(ImageConverter.ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maxContrastActivated));
                     fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
                     String msg = "Conversion ended with success!";
                     Alert popup = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.CLOSE);
@@ -786,6 +788,8 @@ public class ConverterWindowController
                     // only supported types (see FileManager.setupFiles).
                     Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    params.put(ImageConverter.ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maxContrastActivated));
                     long startConversionMillisecs = System.currentTimeMillis();
                     fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
                     convertedFiles++;
