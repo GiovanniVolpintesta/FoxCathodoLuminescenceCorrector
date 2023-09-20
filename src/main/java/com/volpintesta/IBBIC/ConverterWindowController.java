@@ -543,23 +543,14 @@ public class ConverterWindowController
                 
                 while (dstFile.exists()) // while because the user can do something with the dialog open
                 {
-                    ButtonType OverwriteButton = new ButtonType("Overwrite", ButtonBar.ButtonData.OTHER);
-                    ButtonType KeepBothButton = new ButtonType("Keep both files", ButtonBar.ButtonData.OTHER);
+                    // TODO: Hotfix: this dialog has been inserted because the override logic does not work. Replace with the commented logic after fixing it.
                     Alert dialog = new Alert(Alert.AlertType.CONFIRMATION
-                            , "The output file already exists. What do you want to do?"
-                            , OverwriteButton
-                            , KeepBothButton
-                            , new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE)
-                            );
+                            , "A file already exists with the same name as the saved file. The file will be saved with a different name to preserve both."
+                            , ButtonType.OK
+                            , ButtonType.CANCEL
+                    );
                     Optional<ButtonType> response = dialog.showAndWait();
-                    if (response.isPresent() && response.get() == OverwriteButton)
-                    {
-                        if (dstFile.exists()) // check again as some time has passed
-                        {
-                            dstFile.delete(); //TODO questo non può funzinare: il file è lockato dal programma e non viene eliminato. Quindi si resta in un loop infinito.
-                        }
-                    }
-                    else if (response.isPresent() && response.get() == KeepBothButton)
+                    if (response.isPresent() && response.get() == ButtonType.OK)
                     {
                         if (dstFile.exists()) // check again as some time has passed
                         {
@@ -573,6 +564,37 @@ public class ConverterWindowController
                         popup.show();
                         return;
                     }
+
+                    //ButtonType OverwriteButton = new ButtonType("Overwrite", ButtonBar.ButtonData.OTHER);
+                    //ButtonType KeepBothButton = new ButtonType("Keep both files", ButtonBar.ButtonData.OTHER);
+                    //Alert dialog = new Alert(Alert.AlertType.CONFIRMATION
+                    //        , "The output file already exists. What do you want to do?"
+                    //        , OverwriteButton
+                    //        , KeepBothButton
+                    //        , new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE)
+                    //        );
+                    //Optional<ButtonType> response = dialog.showAndWait();
+                    //if (response.isPresent() && response.get() == OverwriteButton)
+                    //{
+                    //    if (dstFile.exists()) // check again as some time has passed
+                    //    {
+                    //        dstFile.delete(); //TODO questo non può funzinare: il file è lockato dal programma e non viene eliminato. Quindi si resta in un loop infinito.
+                    //    }
+                    //}
+                    //else if (response.isPresent() && response.get() == KeepBothButton)
+                    //{
+                    //    if (dstFile.exists()) // check again as some time has passed
+                    //    {
+                    //        dstFile = FileManager.resolveFileNameCollision(dstFile);
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    String msg = "Save operation canceled.";
+                    //    Alert popup = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.CLOSE);
+                    //    popup.show();
+                    //    return;
+                    //}
                 }
                 try
                 {
@@ -726,9 +748,12 @@ public class ConverterWindowController
                     String msg = "The output file \"" + dstFile.getName() + "\" already exists. What do you want to do?"
                             + "\n(Handling conflict " + (handledConflict + 1) + " of " + conflictsCount + ")";
                     Alert dialog = new Alert(Alert.AlertType.CONFIRMATION, msg
-                            , OverwriteButton, OverwriteAllButton, KeepBothButton, KeepBothAllButton
+                            // TODO: Hotfix: this line has been commented because the override logic does not work. Uncomment after fixing it.
+                            // , OverwriteButton, OverwriteAllButton
+                            , KeepBothButton, KeepBothAllButton
                             , SkipButton, CancelAllButton
                     );
+
                     Optional<ButtonType> response = dialog.showAndWait();
                     ChosenOperation = response.orElse(CancelAllButton);
                     if (ChosenOperation == OverwriteAllButton
