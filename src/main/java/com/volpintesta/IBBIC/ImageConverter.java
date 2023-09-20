@@ -225,11 +225,6 @@ public class ImageConverter
         }
     }
 
-    public final ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight)
-    {
-        return internalConvertImageInMemory(srcImageFileName, conversionType, defaultOutputType, params, desiredWidth, desiredHeight);
-    }
-
     public final ByteArrayInputStream convertImageInMemory (String srcImageFileName, ConversionType conversionType, String outputType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight) throws IllegalArgumentException
     {
         if (isTypeSupportedAsOutput(outputType))

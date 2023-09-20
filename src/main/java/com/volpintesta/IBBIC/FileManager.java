@@ -85,16 +85,6 @@ public class FileManager
         return null;
     }
 
-    public InputStream getConvertedImageInputStream (int fileIndex, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params, int desiredWidth, int desiredHeight)
-    {
-        File file = getFileAtIndex(fileIndex);
-        if (file != null)
-        {
-            return imageConverter.convertImageInMemory(file.getAbsolutePath(), conversionType, params, desiredWidth, desiredHeight);
-        }
-        return null;
-    }
-
     public void convertAndSaveFile (File srcFile, File dstFile, ImageConverter.ConversionType conversionType, Map<ImageConverter.ConversionParameter, String> params) throws IOException, IllegalArgumentException, UnsupportedEncodingException
     {
         if (srcFile != null && dstFile != null
