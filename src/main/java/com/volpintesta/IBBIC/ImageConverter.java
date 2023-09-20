@@ -680,7 +680,6 @@ public class ImageConverter
             // extract vChannel
             Mat vChannel = Mat.zeros(source.rows(), source.cols(), CvType.CV_32FC1);
             Core.extractChannel(hsvMat, vChannel, 2);
-            cache.cacheImage("vChannel", vChannel);
             hsvMat.release();
 
             Imgproc.threshold(vChannel, result, thresholdValue, 255.0, Imgproc.THRESH_BINARY);
