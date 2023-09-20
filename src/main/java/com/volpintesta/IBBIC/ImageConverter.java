@@ -463,11 +463,13 @@ public class ImageConverter
     private final Mat PerformCathodoLuminescenceCorrection (Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast)
     {
         ConversionCache cache = caches.get(ConversionType.CATHODO_LUMINESCENCE_CORRECTION);
+        CheckCathodoLuminescenceCorrectionCache(cache, sigmaMultiplier, performNoiseReduction, maximizeContrast);
         return InternalPerformCathodoLuminescenceCorrection(cache, source, sigmaMultiplier, performNoiseReduction, maximizeContrast);
     }
 
-    private final Mat InternalPerformCathodoLuminescenceCorrection (ConversionCache cache, Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast)
+    private boolean CheckCathodoLuminescenceCorrectionCache(ConversionCache cache, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast)
     {
+        boolean clearedCache = false;
         if (!cache.containsParameter(ConversionParameter.PARAM_SIGMA) || !cache.getParameter(ConversionParameter.PARAM_SIGMA).equals(Double.toString(sigmaMultiplier)))
         {
             cache.clearCachedImage("vChannelDivided_0_255");
@@ -476,6 +478,7 @@ public class ImageConverter
             cache.clearCachedImage("result");
             // cache the parameter value that makes the cache valid
             cache.setParameter(ConversionParameter.PARAM_SIGMA, Double.toString(sigmaMultiplier));
+            clearedCache = true;
         }
         if (!cache.containsParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED) || !cache.getParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED).equals(Boolean.toString(performNoiseReduction)))
         {
@@ -484,6 +487,7 @@ public class ImageConverter
             cache.clearCachedImage("result");
             // cache the parameter value that makes the cache valid
             cache.setParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(performNoiseReduction));
+            clearedCache = true;
         }
         if (!cache.containsParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED) || !cache.getParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED).equals(Boolean.toString(maximizeContrast)))
         {
@@ -491,6 +495,7 @@ public class ImageConverter
             cache.clearCachedImage("result");
             // cache the parameter value that makes the cache valid
             cache.setParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maximizeContrast));
+            clearedCache = true;
         }
 
         // Uncomment to debug conversion parameters
@@ -499,6 +504,19 @@ public class ImageConverter
         // System.out.println("performNoiseReduction " + performNoiseReduction);
         // System.out.println("maximizeContrast " + maximizeContrast);
         // System.out.println("---------------");
+
+        return clearedCache;
+    }
+
+    private final Mat InternalPerformCathodoLuminescenceCorrection (ConversionCache cache, Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast)
+    {
+        if (!cache.containsParameter(ConversionParameter.PARAM_SIGMA) || !cache.getParameter(ConversionParameter.PARAM_SIGMA).equals(Double.toString(sigmaMultiplier))
+            || !cache.containsParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED) || !cache.getParameter(ConversionParameter.NOISE_REDUCTION_ACTIVATED).equals(Boolean.toString(performNoiseReduction))
+            || !cache.containsParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED) || !cache.getParameter(ConversionParameter.MAX_CONTRAST_ACTIVATED).equals(Boolean.toString(maximizeContrast))
+        )
+        {
+            throw new UnsupportedOperationException("This conversion must be called after clearing the conversion cache invalid images. Call CheckCathodoLuminescenceCorrectionCache first.");
+        }
 
         if (cache.containsImage("result"))
         {
@@ -709,25 +727,40 @@ public class ImageConverter
     private final Mat PerformThresholdTest (Mat source, double thresholdValue)
     {
         ConversionCache cache = caches.get(ConversionType.THRESHOLD_TEST);
+        CheckThresholdTestCache(cache, thresholdValue, false);
         return InternalPerformThresholdTest(cache, source, thresholdValue);
     }
 
     private final Mat PerformCathodoLuminescenceCorrectionAndThresholdTest (Mat source, double sigmaMultiplier, boolean performNoiseReduction, boolean maximizeContrast, double thresholdValue)
     {
         ConversionCache cache = caches.get(ConversionType.CATHODO_LUMINESCENCE_CORRECTION_THRESHOLD_TEST);
+        boolean changedConversionParams = CheckCathodoLuminescenceCorrectionCache(cache, sigmaMultiplier, performNoiseReduction, maximizeContrast);
+        CheckThresholdTestCache(cache, thresholdValue, changedConversionParams);
         return InternalPerformThresholdTest(cache
                 ,InternalPerformCathodoLuminescenceCorrection(cache, source, sigmaMultiplier, performNoiseReduction, maximizeContrast)
         , thresholdValue);
+        // TODO: capire perchè cambia il vChannel in cache
+    }
+
+    private final boolean CheckThresholdTestCache (ConversionCache cache, double thresholdValue, boolean force)
+    {
+        if (force || !cache.containsParameter(ConversionParameter.THRESHOLD_TEST_VALUE) || !cache.getParameter(ConversionParameter.THRESHOLD_TEST_VALUE).equals(Double.toString(thresholdValue)))
+        {
+            cache.clearCachedImage("thresholdTestResult");
+            // cache the parameter value that makes the cache valid
+            cache.setParameter(ConversionParameter.THRESHOLD_TEST_VALUE, Double.toString(thresholdValue));
+            return true;
+        }
+        return false;
     }
 
     private final Mat InternalPerformThresholdTest (ConversionCache cache, Mat source, double thresholdValue)
     {
         if (!cache.containsParameter(ConversionParameter.THRESHOLD_TEST_VALUE) || !cache.getParameter(ConversionParameter.THRESHOLD_TEST_VALUE).equals(Double.toString(thresholdValue)))
         {
-            cache.clearCachedImage("thresholdTestResult");
-            // cache the parameter value that makes the cache valid
-            cache.setParameter(ConversionParameter.THRESHOLD_TEST_VALUE, Double.toString(thresholdValue));
+            throw new UnsupportedOperationException("This conversion must be called after clearing the conversion cache invalid images. Call CheckThresholdTestCache first.");
         }
+
         if (cache.containsImage("thresholdTestResult"))
         {
             return cache.getImage("thresholdTestResult");
