@@ -757,7 +757,6 @@ public class ImageConverter
             hsvMat.release();
 
             Imgproc.threshold(vChannel, result, thresholdValue, 255.0, Imgproc.THRESH_BINARY);
-            vChannel.release();
         }
 
         cache.cacheImage("thresholdTestResult", result);
