@@ -148,7 +148,7 @@ public class ImageConverter
         }
 
         // This could clear the whole cache, if the desired size is not compatible with the cached images
-        Mat source = ComputeResizedSource (srcImageFileName, conversionType, params, desiredWidth, desiredHeight);
+        Mat source = ComputeResizedSource (srcImageFileName, cache, desiredWidth, desiredHeight);
 
         if (!source.empty())
         {
@@ -160,7 +160,7 @@ public class ImageConverter
             else
             {
                 // the result image is cached inside che ConvertMat method, so it is not necessary to handle another cached image here
-                Mat conversionOutput = ConvertMat(source, conversionType, params, desiredWidth, desiredHeight);
+                Mat conversionOutput = ConvertMat(source, conversionType, params);
 
                 MatOfByte encodedImageBytes = new MatOfByte();
                 try
@@ -181,10 +181,8 @@ public class ImageConverter
         return inputStream;
     }
 
-    private final Mat ComputeResizedSource (String srcImageFileName, ConversionType conversionType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight)
+    private final Mat ComputeResizedSource (String srcImageFileName, ConversionCache cache, int desiredWidth, int desiredHeight)
     {
-        ConversionCache cache = caches.get(conversionType);
-
         Mat srcImage;
         if (cache.containsImage(SRC_IMAGE_CACHE_KEY))
         {
@@ -299,7 +297,7 @@ public class ImageConverter
         return resizedImage;
     }
 
-    private final Mat ConvertMat (Mat source, ConversionType conversionType, Map<ConversionParameter, String> params, int desiredWidth, int desiredHeight)
+    private final Mat ConvertMat (Mat source, ConversionType conversionType, Map<ConversionParameter, String> params)
     {
         double sigma = params.containsKey(ConversionParameter.PARAM_SIGMA) ? Double.parseDouble(params.get(ConversionParameter.PARAM_SIGMA)) : 0.0;
         boolean performNoiseReduction = params.containsKey(ConversionParameter.NOISE_REDUCTION_ACTIVATED) && Boolean.parseBoolean(params.get(ConversionParameter.NOISE_REDUCTION_ACTIVATED));
