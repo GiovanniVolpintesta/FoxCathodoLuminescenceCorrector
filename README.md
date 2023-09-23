@@ -38,33 +38,35 @@ discussed in the article.
 
 ### How to install:
 
-1) Download and extract the program zip file into a directory of your chose. Builds can be found, on GitHub, listed in the "tags" page. You can find a link to the "tags" list under the branch selector or under "Releases" on the right. Each "tag" refers to a build. Download the latest build. When you select a tag, you will find the built project inside a ZIP package and the source code. As a user, you are only interested in the built project, which is executable. The name of the ZIP package is "IBBIC-[VERSION]-[PLATFORM].zip" (e.g.: "IBBIC-1.1.1-win64.zip").
-	- NOTE 1: If you are not a developer, but a standard user, the zip file you downloaded should contain only an "IBBIC.jar" file and some ".bat" and text files.
+1) Download and extract the program zip file into a directory of your chose. Builds can be found, on GitHub, listed in the "tags" page. You can find a link to the "tags" list under the branch selector or under "Releases" on the right. Each "tag" refers to a build. Download the latest build. When you select a tag, you will find the built project inside a ZIP archive and the source code. As a user, you are only interested in the built project, which is executable. The name of the ZIP package is "IBBIC-[VERSION]-[PLATFORM].zip" (e.g.: "IBBIC-1.1.1-win64.zip").
+	- Build archive of the IBBIC latest version: https://github.com/Volpintesta/IBBIC/releases/download/v1.1.1/IBBIC-1.1.1-win64.zip
+	- Older versions: https://github.com/Volpintesta/IBBIC/releases/download
+	- NOTE 1: The build ZIP archive should contain only an "IBBIC.jar" file and some ".bat" and text files.
 		If this is not the case, you have downloaded the source project, which should be built, instead of a build, which can be executed.
-		Try to download a build.	
+		Try to download the build.	
 	- NOTE 2: Only Windows 64-bit packages are provided.
 		Both these packages and this user guide should be compatible with Windows 32-bit, but this has not been tested.
 		If you are using a different operating system, you should build the package on your own, using the developer guide.
 
-2) Download and install the Java 21 JRE from Bellsoft website (under GPU2 license with Classpath Exception):
+3) Download and install the Java 21 JRE from Bellsoft website (under GPU2 license with Classpath Exception):
 	- go to Bellsoft website https://bell-sw.com/pages/downloads/
 	- select the "JDK 21 LTS" versions
 	- find the most suitable version for your computer configuration (e.g.: Windows, x86, 64 bit)
 	- choose the "Standard JRE" package
 	- download either the MSI installer (then install it) or the ZIP archive (then unzip it in a proper location).
 
-3) Download and install the OpenJFX 21 SDK from the Gluon website:
+4) Download and install the OpenJFX 21 SDK from the Gluon website:
 	- go to Gluon website: https://gluonhq.com/products/javafx/
 	- use the filters to select "21 LTS" as "JavaFX version" (the first filter) and "SDK" as "Type" (the fourth filter) 
 	- use the other filters to find the most suitable version for your computer configuration (e.g.: Windows, x64)
 	- download the resulting ZIP archive and unzip it in a proper location.
 
-4) Download and install OpenCV 4.4.0 from the following website:
+5) Download and install OpenCV 4.4.0 from the following website:
 	- go to the OpenCV website: https://opencv.org/releases/
 	- search through the releases the version 4.4.0. It could be that the version is not in the first page. Note that not all the versions are in order.
 	- click the "Windows" button to be redirected to the installer download page, then install the software.
 		
-5) Open the file "setup_installation_directories_win64.bat" from the main directory of the IBBIC build and type the actual installation paths of the three libraries between the quotes. Don't edit anything else otherwise the software will not execute.
+6) Open the file "setup_installation_directories_win64.bat" from the main directory of the IBBIC build and type the actual installation paths of the three libraries between the quotes. Don't edit anything else otherwise the software will not execute.
 	- You should not double-click this file. You should open it with a simple text editor, such as Notepad or Notepad++, edit it, and save it again with the same name and extension.
 	- For each installed software, the installation path is the directory which contains a subdirectory called "bin".
 
