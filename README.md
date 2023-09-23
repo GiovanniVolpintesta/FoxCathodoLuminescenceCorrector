@@ -38,10 +38,10 @@ discussed in the article.
 
 ### How to install:
 
-1) Extract the program zip file into a directory of your chose.
+1) Download and extract the program zip file into a directory of your chose. Builds can be found, on GitHub, listed in the "tags" page. You can find a link to the "tags" list under the branch selector or under "Releases" on the right. Each "tag" refers to a build. Download the latest build.
 	- NOTE 1: If you are not a developer, but a standard user, the zip file you downloaded should contain only an "IBBIC.jar" file and some ".bat" and text files.
-		If this is not the case, you have downloaded the source project, which should be built, instead of a released package, which can be executed.
-		Try to download a release package.	
+		If this is not the case, you have downloaded the source project, which should be built, instead of a build, which can be executed.
+		Try to download a build.	
 	- NOTE 2: Only Windows 64-bit packages are provided.
 		Both these packages and this user guide should be compatible with Windows 32-bit, but this has not been tested.
 		If you are using a different operating system, you should build the package on your own, using the developer guide.
