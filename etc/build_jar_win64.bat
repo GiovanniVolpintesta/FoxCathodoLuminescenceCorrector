@@ -1,7 +1,8 @@
 @ECHO OFF
 
 set PROJECT_RESOURCES_DIR="src\main\resources"
-set BUILD_DIR=".\builds\win64"
+set /p BUILD_VERSION=<"..\version.txt"
+set BUILD_DIR=".\builds\IBBIC-%BUILD_VERSION%-win64"
 
 :: cache the current directory and move to the batch directory
 :: to ensure the relative paths remain consistent
@@ -10,7 +11,7 @@ set CURRENT_BATCH_FILE_PATH=%~dp0
 cd %CURRENT_BATCH_FILE_PATH%
 
 :: setup library environment variables
-call ".\set_environment_variables_win64.bat"
+call ".\set_environment_variables_win64.bat" ".\setup_installation_directories_to_build_win64.bat"
 
 :: move back to project directory
 cd ..
@@ -65,7 +66,7 @@ cd ..
 
 :: copy the launcher batch file
 :: TODO: copy all necessary bat files
-FOR /F "tokens=*" %%a in (..\..\etc\launcher_bats_filename_list.txt) do copy /V /Y "..\..\etc\%%a" "%%a"
+FOR /F "tokens=*" %%a in (..\..\etc\launcher_bats_filename_list.txt) do copy /V /Y "..\..\etc\%%a" .
 
 :: remove temp dir
 rmdir /S /Q temp

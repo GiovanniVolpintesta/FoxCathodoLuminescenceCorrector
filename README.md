@@ -46,22 +46,27 @@ discussed in the article.
 		Both these packages and this user guide should be compatible with Windows 32-bit, but this has not been tested.
 		If you are using a different operating system, you should build the package on your own, using the developer guide.
 
-2) Download Java from the following website:
-	- Oracle JRE (under Oracle Technology Network license): https://www.java.com/it/download/
+2) Download and install the Java 21 JRE from Bellsoft website (under GPU2 license with Classpath Exception):
+	- go to Bellsoft website https://bell-sw.com/pages/downloads/
+	- select the "JDK 21 LTS" versions
+	- find the most suitable version for your computer configuration (e.g.: Windows, x86, 64 bit)
+	- choose the "Standard JRE" package
+	- download either the MSI installer (then install it) or the ZIP archive (then unzip it in a proper location).
 
-3) Download a Java FX from any of the following websites:
-	- Oracle Java FX: https://wiki.openjdk.org/display/OpenJFX
-	- Gluon Java FX: https://openjfx.io/
+3) Download and install the OpenJFX 21 SDK from the Gluon website:
+	- go to Gluon website: https://gluonhq.com/products/javafx/
+	- use the filters to select "21 LTS" as "JavaFX version" (the first filter) and "SDK" as "Type" (the fourth filter) 
+	- use the other filters to find the most suitable version for your computer configuration (e.g.: Windows, x64)
+	- download the resulting ZIP archive and unzip it in a proper location.
 
-4) Download OpenCV from the following website:
-	- OpenCV: https://opencv.org/releases/
+4) Download and install OpenCV 4.4.0 from the following website:
+	- go to the OpenCV website: https://opencv.org/releases/
+	- search through the releases the version 4.4.0. It could be that the version is not in the first page. Note that not all the versions are in order.
+	- click the "Windows" button to be redirected to the installer download page, then install the software.
 		
-5) Install the three downloaded libraries, or extract their compressed archives.
-	- Be sure you have downloaded the correct library version for your operating system configuration before proceeding with the installation.
-
-6) Open the file "setup_installation_directories_win64.bat" from this program directory and type the actual installation paths of the three libraries.
-	- NOTE: You should not double-click this file.
-		You should open it with a simple text editor, such as Notepad or Notepad++, edit it, and save it again with the same name and extension.
+5) Open the file "setup_installation_directories_win64.bat" from the main directory of the IBBIC build and type the actual installation paths of the three libraries between the quotes. Don't edit anything else otherwise the software will not execute.
+	- You should not double-click this file. You should open it with a simple text editor, such as Notepad or Notepad++, edit it, and save it again with the same name and extension.
+	- For each installed software, the installation path is the directory which contains a subdirectory called "bin".
 
 ### How to run:
 		
@@ -81,18 +86,25 @@ If you correctly completed the install passages, you'll be able to launch the pr
 		- set_environment_variables_win64.bat: a script used to set all the common environment variables used in the build and launch scripts.
 		- build_jar_win64.bat: a script used to build the final jar and to copy inside the build directory the necessary launcher scripts.
 		- launcher_win64.bat: a script used to launch the built jar.
-		- launcher_bats_filename_list.txt: a list of scripts that should be copied in the build directory (the launcher scripts, and its dependencies).
+		- launcher_bats_filename_list.txt: a list of files that should be copied in the build directory (the launcher scripts, its dependencies and the LICENSE and README files).
 	
-2) Download and install/unzip the Java JDK from any of the following websites.
-	- Oracle JDK (under Oracle NTFC license): https://www.oracle.com/java/technologies/downloads/
-	- Oracle OpenJDK (under GNU GPLv2 license with Classpath Exception): https://openjdk.org/
+2) Download and install the Java 21 JRE from Bellsoft website (under GPU2 license with Classpath Exception):
+	- go to Bellsoft website https://bell-sw.com/pages/downloads/
+	- select the "JDK 21 LTS" versions
+	- find the most suitable version for your computer configuration (e.g.: Windows, x86, 64 bit)
+	- choose the "Standard JRE" package
+	- download either the MSI installer (then install it) or the ZIP archive (then unzip it in a proper location).
 
-3) Download and install/unzip the Java FX SDK from any of the following websites.
-	- Oracle Java FX: https://wiki.openjdk.org/display/OpenJFX
-	- Gluon Java FX: https://openjfx.io/
+3) Download and install the OpenJFX 21 SDK from the Gluon website:
+	- go to Gluon website: https://gluonhq.com/products/javafx/
+	- use the filters to select "21 LTS" as "JavaFX version" (the first filter) and "SDK" as "Type" (the fourth filter) 
+	- use the other filters to find the most suitable version for your computer configuration (e.g.: Windows, x64)
+	- download the resulting ZIP archive and unzip it in a proper location.
 
-3) Download and install/unzip OpenCV from the following website.
-	- OpenCV: https://opencv.org/releases/
+4) Download and install OpenCV 4.4.0 from the following website:
+	- go to the OpenCV website: https://opencv.org/releases/
+	- search through the releases the version 4.4.0. It could be that the version is not in the first page. Note that not all the versions are in order.
+	- click the "Windows" button to be redirected to the installer download page, then install the software.
 		
 5) Open the file "setup_installation_directories_win64.bat" inside the "etc" subdirectory
 	and type the actual installation paths of the three libraries.

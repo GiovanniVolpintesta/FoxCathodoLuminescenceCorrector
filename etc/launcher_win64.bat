@@ -8,7 +8,7 @@ set CURRENT_DIRECTORY_BKP=%CD%
 set CURRENT_BATCH_FILE_PATH=%~dp0
 
 :: setup library environment variables
-call "set_environment_variables_win64.bat"
+call "set_environment_variables_win64.bat" "setup_installation_directories_win64.bat"
 @ECHO OFF
 
 cd %CURRENT_BATCH_FILE_PATH%
