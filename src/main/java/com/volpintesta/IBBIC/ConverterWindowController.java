@@ -16,10 +16,15 @@ import javafx.stage.Window;
 import javafx.util.StringConverter;
 
 import java.io.*;
+import java.security.Timestamp;
+import java.text.*;
+import java.time.*;
 import java.util.*;
 
 public class ConverterWindowController
 {
+    static boolean doBenchmark = false; // set to true to print benchmarks
+    static DateFormat dateFormat = new SimpleDateFormat("hh:mm:ss.SSS");
     enum PreviewType {
         NONE
         , CONVERSION_RESULT
@@ -37,6 +42,14 @@ public class ConverterWindowController
     private static final String noiseReductionButtonIconResourceName = "/icons/noise_reduction_icon.png";
     private static final String maxContrastButtonIconResourceName = "/icons/max_constrast_icon.png";
     private static final String thresholdTestHandlerIconResourceName = "/icons/threshold_handler_icon.png";
+    private static final String firstItemIconResourceName = "/icons/first_item_icon.png";
+    private static final String lastItemIconResourceName = "/icons/last_item_icon.png";
+    private static final String nextItemIconResourceName = "/icons/next_item_icon.png";
+    private static final String previousItemIconResourceName = "/icons/previous_item_icon.png";
+    private static final String magnifyIconResourceName = "/icons/magnify_icon.png";
+    private static final String saveIconResourceName = "/icons/save_icon.png";
+    private static final String openDirectoryIconResourceName = "/icons/open_directory_icon.png";
+    private static final String openImageIconResourceName = "/icons/open_image_icon.png";
 
     private static final String previewImageType = "png";
 
@@ -49,12 +62,20 @@ public class ConverterWindowController
     @FXML private ImageView sourceImageView;
     @FXML private ImageView convertedImageView;
 
+    @FXML private ImageView openFileButtonImageView;
+    @FXML private ImageView openDirectoryButtonImageView;
     @FXML private Button firstButton;
+    @FXML private ImageView firstButtonImageView;
     @FXML private Button previousButton;
+    @FXML private ImageView previousButtonImageView;
     @FXML private Button nextButton;
+    @FXML private ImageView nextButtonImageView;
     @FXML private Button lastButton;
+    @FXML private ImageView lastButtonImageView;
     @FXML private ToggleButton maximizeToggleButton;
+    @FXML private ImageView maximizeToggleButtonImageView;
     @FXML private Button saveButton;
+    @FXML private ImageView saveButtonImageView;
 
     @FXML private ToggleButton previewConversionToggleButton;
     @FXML private ImageView previewConversionToggleButtonImageView;
@@ -196,6 +217,55 @@ public class ConverterWindowController
         verticalScrollValue = 0;
         horizontalScrollBar.setVisible(false);
         verticalScrollBar.setVisible(false);
+
+/*
+
+openImageIconResourceName
+openDirectoryIconResourceName
+firstItemIconResourceName
+previousItemIconResourceName
+nextItemIconResourceName
+lastItemIconResourceName
+magnifyIconResourceName
+saveIconResourceName
+
+
+
+     openFileButton
+     openDirectoryButton
+     firstButton
+     previousButton
+     nextButton
+     lastButton
+     maximizeToggleButton
+     saveButton
+
+ */
+
+        InputStream openFileButtonImageStream = getClass().getResourceAsStream(openImageIconResourceName);
+        openFileButtonImageView.setImage(openFileButtonImageStream != null ? new Image(openFileButtonImageStream) : null);
+
+        InputStream openDirectoryButtonImageStream = getClass().getResourceAsStream(openDirectoryIconResourceName);
+        openDirectoryButtonImageView.setImage(openDirectoryButtonImageStream != null ? new Image(openDirectoryButtonImageStream) : null);
+
+        InputStream firstButtonImageStream = getClass().getResourceAsStream(firstItemIconResourceName);
+        firstButtonImageView.setImage(firstButtonImageStream != null ? new Image(firstButtonImageStream) : null);
+
+        InputStream previousButtonImageStream = getClass().getResourceAsStream(previousItemIconResourceName);
+        previousButtonImageView.setImage(previousButtonImageStream != null ? new Image(previousButtonImageStream) : null);
+
+        InputStream nextButtonImageStream = getClass().getResourceAsStream(nextItemIconResourceName);
+        nextButtonImageView.setImage(nextButtonImageStream != null ? new Image(nextButtonImageStream) : null);
+
+        InputStream lastButtonImageStream = getClass().getResourceAsStream(lastItemIconResourceName);
+        lastButtonImageView.setImage(lastButtonImageStream != null ? new Image(lastButtonImageStream) : null);
+
+        InputStream maximizeToggleButtonImageStream = getClass().getResourceAsStream(magnifyIconResourceName);
+        maximizeToggleButtonImageView.setImage(maximizeToggleButtonImageStream != null ? new Image(maximizeToggleButtonImageStream) : null);
+
+        InputStream saveButtonImageStream = getClass().getResourceAsStream(saveIconResourceName);
+        saveButtonImageView.setImage(saveButtonImageStream != null ? new Image(saveButtonImageStream) : null);
+
 
         InputStream previewConversionButtonImageStream = getClass().getResourceAsStream(previewConversionIconResourceName);
         previewConversionToggleButtonImageView.setImage(previewConversionButtonImageStream != null ? new Image(previewConversionButtonImageStream) : null);
@@ -538,23 +608,14 @@ public class ConverterWindowController
                 
                 while (dstFile.exists()) // while because the user can do something with the dialog open
                 {
-                    ButtonType OverwriteButton = new ButtonType("Overwrite", ButtonBar.ButtonData.OTHER);
-                    ButtonType KeepBothButton = new ButtonType("Keep both files", ButtonBar.ButtonData.OTHER);
+                    // TODO: Hotfix: this dialog has been inserted because the override logic does not work. Replace with the commented logic after fixing it.
                     Alert dialog = new Alert(Alert.AlertType.CONFIRMATION
-                            , "The output file already exists. What do you want to do?"
-                            , OverwriteButton
-                            , KeepBothButton
-                            , new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE)
-                            );
+                            , "A file already exists with the same name as the saved file. The file will be saved with a different name to preserve both."
+                            , ButtonType.OK
+                            , ButtonType.CANCEL
+                    );
                     Optional<ButtonType> response = dialog.showAndWait();
-                    if (response.isPresent() && response.get() == OverwriteButton)
-                    {
-                        if (dstFile.exists()) // check again as some time has passed
-                        {
-                            dstFile.delete(); //TODO questo non può funzinare: il file è lockato dal programma e non viene eliminato. Quindi si resta in un loop infinito.
-                        }
-                    }
-                    else if (response.isPresent() && response.get() == KeepBothButton)
+                    if (response.isPresent() && response.get() == ButtonType.OK)
                     {
                         if (dstFile.exists()) // check again as some time has passed
                         {
@@ -568,6 +629,37 @@ public class ConverterWindowController
                         popup.show();
                         return;
                     }
+
+                    //ButtonType OverwriteButton = new ButtonType("Overwrite", ButtonBar.ButtonData.OTHER);
+                    //ButtonType KeepBothButton = new ButtonType("Keep both files", ButtonBar.ButtonData.OTHER);
+                    //Alert dialog = new Alert(Alert.AlertType.CONFIRMATION
+                    //        , "The output file already exists. What do you want to do?"
+                    //        , OverwriteButton
+                    //        , KeepBothButton
+                    //        , new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE)
+                    //        );
+                    //Optional<ButtonType> response = dialog.showAndWait();
+                    //if (response.isPresent() && response.get() == OverwriteButton)
+                    //{
+                    //    if (dstFile.exists()) // check again as some time has passed
+                    //    {
+                    //        dstFile.delete(); //TODO questo non può funzinare: il file è lockato dal programma e non viene eliminato. Quindi si resta in un loop infinito.
+                    //    }
+                    //}
+                    //else if (response.isPresent() && response.get() == KeepBothButton)
+                    //{
+                    //    if (dstFile.exists()) // check again as some time has passed
+                    //    {
+                    //        dstFile = FileManager.resolveFileNameCollision(dstFile);
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    String msg = "Save operation canceled.";
+                    //    Alert popup = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.CLOSE);
+                    //    popup.show();
+                    //    return;
+                    //}
                 }
                 try
                 {
@@ -576,6 +668,8 @@ public class ConverterWindowController
                     // IllegalArgumentException should never be called because the extension is checked previously in this method.
                     Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
                     params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                    params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                    params.put(ImageConverter.ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maxContrastActivated));
                     fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
                     String msg = "Conversion ended with success!";
                     Alert popup = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.CLOSE);
@@ -617,7 +711,14 @@ public class ConverterWindowController
             dirChooser.setTitle("Select an output directory");
             dirChooser.setInitialDirectory(outputDirectory != null ? outputDirectory : fileManager.getWorkingDirectory());
             outputDirectory = dirChooser.showDialog(ownerWindow);
-            if (outputDirectory.getPath().equals(fileManager.getWorkingDirectory().getPath()))
+            if (outputDirectory == null)
+            {
+                String directoryAlertMsg = "No output directory has been selected.";
+                Alert popup = new Alert(Alert.AlertType.ERROR, directoryAlertMsg, ButtonType.CLOSE);
+                Optional<ButtonType> response = popup.showAndWait();
+                break;
+            }
+            else if (outputDirectory.getPath().equals(fileManager.getWorkingDirectory().getPath()))
             {
                 String directoryAlertMsg = "You cannot save in the same directory where the source files are. Choose another directory.";
                 Alert popup = new Alert(Alert.AlertType.ERROR, directoryAlertMsg, ButtonType.CLOSE);
@@ -629,215 +730,198 @@ public class ConverterWindowController
             }
         }
 
-        // Key = source file; Value = destination file.
-        HashMap<File, File> filePairs = new HashMap<>();
-        ArrayList<File> renamedFiles = new ArrayList<>();
-        ArrayList<File> overwrittenFiles = new ArrayList<>();
-        ArrayList<File> skippedFiles = new ArrayList<>();
-        ArrayList<File> changedTypeFiles = new ArrayList<>();
+        if (outputDirectory != null) {
 
-        int conflictsCount = 0;
-        int handledConflict = 0;
+            // Key = source file; Value = destination file.
+            HashMap<File, File> filePairs = new HashMap<>();
+            ArrayList<File> renamedFiles = new ArrayList<>();
+            ArrayList<File> overwrittenFiles = new ArrayList<>();
+            ArrayList<File> skippedFiles = new ArrayList<>();
+            ArrayList<File> changedTypeFiles = new ArrayList<>();
 
-        Boolean confirmedTypeChange = null;
-        
-        // retrieve all the files to save and all the output files
-        // if any output file already exists, add the source file to a conflicts list
-        // that will be handled before the conversion operations.
-        for (int i = 0; i < fileManager.getFilesCount(); ++i)
-        {
-            File srcFile = fileManager.getFileAtIndex(i);
-            File dstFile = new File(outputDirectory, srcFile.getName());
+            int conflictsCount = 0;
+            int handledConflict = 0;
 
-            // Handle the extension problem: FileManager.convertAndSaveFile throws IllegalArgumentException if the type
-            // of the dstImage is not supported as conversion output. We can convert such images to the default output
-            // type defined by ImageConverter, but the file extension should be changed accordingly, and it should be
-            // changed here to correctly handle the file conflicts later.
-            if (!fileManager.isFileOutputSupported(dstFile))
-            {
-                if (confirmedTypeChange == null) // If the popup has never been shown
-                {
-                    Alert extensionAlert = new Alert(Alert.AlertType.CONFIRMATION
-                            , "Some of the file types are not supported as conversion output. Both the unsupported images type and files extension will be converted to " + imageConverter.getDefaultOutputType().toUpperCase() + ". Would you like to proceed?"
-                            , ButtonType.YES
-                            , ButtonType.NO
-                    );
-                    Optional<ButtonType> response = extensionAlert.showAndWait();
-                    if (response.isPresent() && response.get() == ButtonType.YES)
+            Boolean confirmedTypeChange = null;
+
+            // retrieve all the files to save and all the output files
+            // if any output file already exists, add the source file to a conflicts list
+            // that will be handled before the conversion operations.
+            for (int i = 0; i < fileManager.getFilesCount(); ++i) {
+                File srcFile = fileManager.getFileAtIndex(i);
+                File dstFile = new File(outputDirectory, srcFile.getName());
+
+                // Handle the extension problem: FileManager.convertAndSaveFile throws IllegalArgumentException if the type
+                // of the dstImage is not supported as conversion output. We can convert such images to the default output
+                // type defined by ImageConverter, but the file extension should be changed accordingly, and it should be
+                // changed here to correctly handle the file conflicts later.
+                if (!fileManager.isFileOutputSupported(dstFile)) {
+                    if (confirmedTypeChange == null) // If the popup has never been shown
                     {
-                        confirmedTypeChange = true; // Do not show the popup anymore
+                        Alert extensionAlert = new Alert(Alert.AlertType.CONFIRMATION
+                                , "Some of the file types are not supported as conversion output. Both the unsupported images type and files extension will be converted to " + imageConverter.getDefaultOutputType().toUpperCase() + ". Would you like to proceed?"
+                                , ButtonType.YES
+                                , ButtonType.NO
+                        );
+                        Optional<ButtonType> response = extensionAlert.showAndWait();
+                        if (response.isPresent() && response.get() == ButtonType.YES) {
+                            confirmedTypeChange = true; // Do not show the popup anymore
+                        } else {
+                            return; // save operation aborted
+                        }
                     }
-                    else
-                    {
-                        return; // save operation aborted
+
+                    if (confirmedTypeChange != null && confirmedTypeChange.booleanValue()) {
+                        String filename = dstFile.getName();
+                        int extensionPointIndex = filename.lastIndexOf(".");
+                        if (extensionPointIndex >= 0 && extensionPointIndex < filename.length()) {
+                            filename = filename.substring(0, extensionPointIndex); // excluding point and extension
+                        }
+                        dstFile = new File(dstFile.getParentFile(), filename + "." + imageConverter.getDefaultOutputType());
+                        changedTypeFiles.add(srcFile);
                     }
                 }
-                
-                if (confirmedTypeChange != null && confirmedTypeChange.booleanValue())
-                {
-                    String filename = dstFile.getName();
-                    int extensionPointIndex = filename.lastIndexOf(".");
-                    if (extensionPointIndex >= 0 && extensionPointIndex < filename.length())
-                    {
-                        filename = filename.substring(0, extensionPointIndex); // excluding point and extension
-                    }
-                    dstFile = new File(dstFile.getParentFile(), filename + "." + imageConverter.getDefaultOutputType());
-                    changedTypeFiles.add(srcFile);
+
+                filePairs.put(srcFile, dstFile);
+                if (dstFile.exists()) {
+                    ++conflictsCount;
                 }
             }
 
-            filePairs.put(srcFile, dstFile);
-            if (dstFile.exists())
-            {
-                ++conflictsCount;
-            }
-        }
+            ButtonType OverwriteButton = new ButtonType("Overwrite", ButtonBar.ButtonData.OTHER);
+            ButtonType OverwriteAllButton = new ButtonType("Overwrite (All)", ButtonBar.ButtonData.OTHER);
+            ButtonType KeepBothButton = new ButtonType("Keep both files", ButtonBar.ButtonData.OTHER);
+            ButtonType KeepBothAllButton = new ButtonType("Keep both files (All)", ButtonBar.ButtonData.OTHER);
+            ButtonType SkipButton = new ButtonType("Skip this file", ButtonBar.ButtonData.OTHER);
+            ButtonType CancelAllButton = new ButtonType("Cancel (All)", ButtonBar.ButtonData.OTHER);
 
-        ButtonType OverwriteButton = new ButtonType("Overwrite", ButtonBar.ButtonData.OTHER);
-        ButtonType OverwriteAllButton = new ButtonType("Overwrite (All)", ButtonBar.ButtonData.OTHER);
-        ButtonType KeepBothButton = new ButtonType("Keep both files", ButtonBar.ButtonData.OTHER);
-        ButtonType KeepBothAllButton = new ButtonType("Keep both files (All)", ButtonBar.ButtonData.OTHER);
-        ButtonType SkipButton = new ButtonType("Skip this file", ButtonBar.ButtonData.OTHER);
-        ButtonType CancelAllButton = new ButtonType("Cancel (All)", ButtonBar.ButtonData.OTHER);
+            ButtonType ChosenOperationForAllFiles = null;
 
-        ButtonType ChosenOperationForAllFiles = null;
-
-        Set<File> srcFiles = filePairs.keySet();
-        for (File srcFile : srcFiles)
-        {
-            File dstFile = filePairs.get(srcFile);
-
-            if (dstFile.exists())
-            {
-                ButtonType ChosenOperation;
-                if (ChosenOperationForAllFiles != null)
-                {
-                    ChosenOperation = ChosenOperationForAllFiles;
-                }
-                else
-                {
-                    String msg = "The output file \"" + dstFile.getName() + "\" already exists. What do you want to do?"
-                            + "\n(Handling conflict " + (handledConflict + 1) + " of " + conflictsCount + ")";
-                    Alert dialog = new Alert(Alert.AlertType.CONFIRMATION, msg
-                            , OverwriteButton, OverwriteAllButton, KeepBothButton, KeepBothAllButton
-                            , SkipButton, CancelAllButton
-                    );
-                    Optional<ButtonType> response = dialog.showAndWait();
-                    ChosenOperation = response.orElse(CancelAllButton);
-                    if (ChosenOperation == OverwriteAllButton
-                            || ChosenOperation == KeepBothAllButton
-                            || ChosenOperation == CancelAllButton)
-                    {
-                        ChosenOperationForAllFiles = ChosenOperation;
-                    }
-                }
-
-                if (ChosenOperation == OverwriteButton || ChosenOperation == OverwriteAllButton)
-                {
-                    overwrittenFiles.add(dstFile);
-                }
-                else if (ChosenOperation == KeepBothButton || ChosenOperation == KeepBothAllButton)
-                {
-                    dstFile = FileManager.resolveFileNameCollision(dstFile, renamedFiles);
-                    renamedFiles.add(dstFile);
-                    filePairs.put(srcFile, dstFile);
-                }
-                else if (ChosenOperation == SkipButton)
-                {
-                    skippedFiles.add(srcFile);
-                }
-                else if (ChosenOperation == CancelAllButton)
-                {
-                    return;
-                }
-                ++handledConflict;
-            }
-        }
-
-        // Do the conversions and save the files.
-        // If any error is thrown during these operations, the file is added to a list
-        // of not handled errors that will be shown at the end
-        ArrayList<File> errorFilesList = new ArrayList<>();
-        for (File srcFile : filePairs.keySet())
-        {
-            if (!skippedFiles.contains(srcFile))
-            {
+            Set<File> srcFiles = filePairs.keySet();
+            for (File srcFile : srcFiles) {
                 File dstFile = filePairs.get(srcFile);
-                try
-                {
-                    if (dstFile.exists())
-                    {
-                        dstFile.delete();
+
+                if (dstFile.exists()) {
+                    ButtonType ChosenOperation;
+                    if (ChosenOperationForAllFiles != null) {
+                        ChosenOperation = ChosenOperationForAllFiles;
+                    } else {
+                        String msg = "The output file \"" + dstFile.getName() + "\" already exists. What do you want to do?"
+                                + "\n(Handling conflict " + (handledConflict + 1) + " of " + conflictsCount + ")";
+                        Alert dialog = new Alert(Alert.AlertType.CONFIRMATION, msg
+                                // TODO: Hotfix: this line has been commented because the override logic does not work. Uncomment after fixing it.
+                                // , OverwriteButton, OverwriteAllButton
+                                , KeepBothButton, KeepBothAllButton
+                                , SkipButton, CancelAllButton
+                        );
+
+                        Optional<ButtonType> response = dialog.showAndWait();
+                        ChosenOperation = response.orElse(CancelAllButton);
+                        if (ChosenOperation == OverwriteAllButton
+                                || ChosenOperation == KeepBothAllButton
+                                || ChosenOperation == CancelAllButton) {
+                            ChosenOperationForAllFiles = ChosenOperation;
+                        }
                     }
-                    // This should never call the IllegalArgumentException, because on the top of this method it has
-                    // been ensured that the files have a supported extension and conversion type. If the exception
-                    // is triggered, there is a problem either in that routine or in the conversion types management.
-                    // Remember that the conversion type should be aligned with the file extension, and the file
-                    // conflicts should be checked with the final extension.
-                    // UnsupportedEncodingException should never be thrown because the images collection includes
-                    // only supported types (see FileManager.setupFiles).
-                    Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
-                    params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
-                    fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
-                }
-                catch (IOException e)
-                {
-                    if (dstFile.exists())
-                    {
-                        dstFile.delete();
+
+                    if (ChosenOperation == OverwriteButton || ChosenOperation == OverwriteAllButton) {
+                        overwrittenFiles.add(dstFile);
+                    } else if (ChosenOperation == KeepBothButton || ChosenOperation == KeepBothAllButton) {
+                        dstFile = FileManager.resolveFileNameCollision(dstFile, renamedFiles);
+                        renamedFiles.add(dstFile);
+                        filePairs.put(srcFile, dstFile);
+                    } else if (ChosenOperation == SkipButton) {
+                        skippedFiles.add(srcFile);
+                    } else if (ChosenOperation == CancelAllButton) {
+                        return;
                     }
-                    errorFilesList.add(srcFile);
+                    ++handledConflict;
                 }
             }
-        }
 
-        String endPopupMsg = errorFilesList.isEmpty()
-                ? "Conversion ended with success for all the files."
-                : "Conversion ended with success for a part of the files.";
-        Alert.AlertType endPopupType = errorFilesList.isEmpty()
-                ? Alert.AlertType.INFORMATION
-                : Alert.AlertType.WARNING;
-        ButtonType detailsButton = new ButtonType("Show details", ButtonBar.ButtonData.OTHER);
-        Alert endPopup = new Alert(endPopupType, endPopupMsg, detailsButton, ButtonType.CLOSE);
-        endPopup.resizableProperty().set(true);
-        Optional<ButtonType> endPopupResponse = endPopup.showAndWait();
+            long startAllConversionsMillisecs = System.currentTimeMillis();
 
-        if (endPopupResponse.isPresent() && endPopupResponse.get() == detailsButton)
-        {
-            StringBuilder detailsPopupMsg = new StringBuilder("DIRECTORY CONVERSION DETAILS\n");
-            detailsPopupMsg.append("\n working directory = \"").append(fileManager.getWorkingDirectory().getPath()).append("\"");
-            detailsPopupMsg.append("\n output directory = \"").append(outputDirectory.getPath()).append("\"");
-            detailsPopupMsg.append("\n");
-            for (File srcFile : filePairs.keySet())
-            {
-                File dstFile = filePairs.get(srcFile);
-                String msgLine = "\n";
-                if (skippedFiles.contains(srcFile))
-                {
-                    msgLine += "SKIPPED CONVERSION OF " + srcFile.getName();
-                }
-                else if (errorFilesList.contains(srcFile))
-                {
-                    msgLine += "FAILED CONVERSION OF " + srcFile.getName();
-                }
-                else
-                {
-                    msgLine += overwrittenFiles.contains(dstFile) ? "OVERWRITTEN " : "CREATED ";
-                    msgLine += dstFile.getName();
-                    if (renamedFiles.contains(dstFile))
-                    {
-                        msgLine += " - ORIGINAL FILE NAME: " + srcFile.getName() + "";
-                    }
-                    if (changedTypeFiles.contains(srcFile))
-                    {
-                        msgLine += " - The source image type was not supported as conversion output, so the converted image type is now " + imageConverter.getDefaultOutputType();
+            // Do the conversions and save the files.
+            // If any error is thrown during these operations, the file is added to a list
+            // of not handled errors that will be shown at the end
+            ArrayList<File> errorFilesList = new ArrayList<>();
+            int convertedFiles = 0;
+            for (File srcFile : filePairs.keySet()) {
+                if (!skippedFiles.contains(srcFile)) {
+                    File dstFile = filePairs.get(srcFile);
+                    try {
+                        if (dstFile.exists()) {
+                            dstFile.delete();
+                        }
+                        // This should never call the IllegalArgumentException, because on the top of this method it has
+                        // been ensured that the files have a supported extension and conversion type. If the exception
+                        // is triggered, there is a problem either in that routine or in the conversion types management.
+                        // Remember that the conversion type should be aligned with the file extension, and the file
+                        // conflicts should be checked with the final extension.
+                        // UnsupportedEncodingException should never be thrown because the images collection includes
+                        // only supported types (see FileManager.setupFiles).
+                        Map<ImageConverter.ConversionParameter, String> params = new HashMap<ImageConverter.ConversionParameter, String>();
+                        params.put(ImageConverter.ConversionParameter.PARAM_SIGMA, Double.toString(blurFilterPercentage));
+                        params.put(ImageConverter.ConversionParameter.NOISE_REDUCTION_ACTIVATED, Boolean.toString(noiseReductionActivated));
+                        params.put(ImageConverter.ConversionParameter.MAX_CONTRAST_ACTIVATED, Boolean.toString(maxContrastActivated));
+                        long startConversionMillisecs = System.currentTimeMillis();
+                        fileManager.convertAndSaveFile(srcFile, dstFile, ImageConverter.ConversionType.CATHODO_LUMINESCENCE_CORRECTION, params);
+                        convertedFiles++;
+                        long endConversionMillisecs = System.currentTimeMillis();
+                        if (doBenchmark)
+                            System.out.println("Conversion " + convertedFiles + " time: " + dateFormat.format(Date.from(Instant.ofEpochMilli(endConversionMillisecs - startConversionMillisecs))));
+                    } catch (IOException e) {
+                        if (dstFile.exists()) {
+                            dstFile.delete();
+                        }
+                        errorFilesList.add(srcFile);
                     }
                 }
-                detailsPopupMsg.append(msgLine);
             }
-            Alert detailsPopup = new Alert(Alert.AlertType.INFORMATION, detailsPopupMsg.toString(), ButtonType.CLOSE);
-            detailsPopup.resizableProperty().set(true);
-            detailsPopup.show();
+
+            long endAllConversionsMillisecs = System.currentTimeMillis();
+            if (doBenchmark)
+                System.out.println("Conversion " + convertedFiles + " time: " + dateFormat.format(Date.from(Instant.ofEpochMilli(endAllConversionsMillisecs - startAllConversionsMillisecs))));
+
+            String endPopupMsg = errorFilesList.isEmpty()
+                    ? "Conversion ended with success for all the files."
+                    : "Conversion ended with success for a part of the files.";
+            Alert.AlertType endPopupType = errorFilesList.isEmpty()
+                    ? Alert.AlertType.INFORMATION
+                    : Alert.AlertType.WARNING;
+            ButtonType detailsButton = new ButtonType("Show details", ButtonBar.ButtonData.OTHER);
+            Alert endPopup = new Alert(endPopupType, endPopupMsg, detailsButton, ButtonType.CLOSE);
+            endPopup.resizableProperty().set(true);
+            Optional<ButtonType> endPopupResponse = endPopup.showAndWait();
+
+            if (endPopupResponse.isPresent() && endPopupResponse.get() == detailsButton) {
+                StringBuilder detailsPopupMsg = new StringBuilder("DIRECTORY CONVERSION DETAILS\n");
+                detailsPopupMsg.append("\n working directory = \"").append(fileManager.getWorkingDirectory().getPath()).append("\"");
+                detailsPopupMsg.append("\n output directory = \"").append(outputDirectory.getPath()).append("\"");
+                detailsPopupMsg.append("\n");
+                for (File srcFile : filePairs.keySet()) {
+                    File dstFile = filePairs.get(srcFile);
+                    String msgLine = "\n";
+                    if (skippedFiles.contains(srcFile)) {
+                        msgLine += "SKIPPED CONVERSION OF " + srcFile.getName();
+                    } else if (errorFilesList.contains(srcFile)) {
+                        msgLine += "FAILED CONVERSION OF " + srcFile.getName();
+                    } else {
+                        msgLine += overwrittenFiles.contains(dstFile) ? "OVERWRITTEN " : "CREATED ";
+                        msgLine += dstFile.getName();
+                        if (renamedFiles.contains(dstFile)) {
+                            msgLine += " - ORIGINAL FILE NAME: " + srcFile.getName() + "";
+                        }
+                        if (changedTypeFiles.contains(srcFile)) {
+                            msgLine += " - The source image type was not supported as conversion output, so the converted image type is now " + imageConverter.getDefaultOutputType();
+                        }
+                    }
+                    detailsPopupMsg.append(msgLine);
+                }
+                Alert detailsPopup = new Alert(Alert.AlertType.INFORMATION, detailsPopupMsg.toString(), ButtonType.CLOSE);
+                detailsPopup.resizableProperty().set(true);
+                detailsPopup.show();
+            }
         }
     }
 

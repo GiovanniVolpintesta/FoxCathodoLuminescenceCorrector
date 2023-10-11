@@ -17,19 +17,46 @@
                 <Insets top="5" left="5" right="5" />
             </BorderPane.margin>
 
-            <Button minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onOpenFileButtonClick" text="&#x1F4F7;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
-            <Button minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onOpenDirectoryButtonClick" text="&#x1F4C2;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
-            <Button fx:id="firstButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onFirstImageButtonClick" text="&#x2b9c;&#x2b9c;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
-            <Button fx:id="previousButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onPreviousImageButtonClick" text="&#x2b9c;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
-            <Button fx:id="nextButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onNextImageButtonClick" text="&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
-            <Button fx:id="lastButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onLastImageButtonClick" text="&#x2b9e;&#x2b9e;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
-            <Button fx:id="saveButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onSaveButtonClick" text="&#x1F4BE;" textAlignment="CENTER"><font><Font size="15"/></font></Button>
+            <Button minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onOpenFileButtonClick">
+                <graphic><ImageView fx:id="openFileButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Open an image file."/></tooltip>
+            </Button>
 
-            <ToggleButton fx:id="maximizeToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" text="&#x1F50D;" textAlignment="CENTER">
+            <Button minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onOpenDirectoryButtonClick">
+                <graphic><ImageView fx:id="openDirectoryButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Open a directory containing image files."/></tooltip>
+            </Button>
+
+            <Button fx:id="firstButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onFirstImageButtonClick">
+                <graphic><ImageView fx:id="firstButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Show the first image of the open directory."/></tooltip>
+            </Button>
+
+            <Button fx:id="previousButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onPreviousImageButtonClick">
+                <graphic><ImageView fx:id="previousButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Show the previous image in the open directory."/></tooltip>
+            </Button>
+
+            <Button fx:id="nextButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onNextImageButtonClick">
+                <graphic><ImageView fx:id="nextButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Show the next image in the open directory."/></tooltip>
+            </Button>
+
+            <Button fx:id="lastButton" minHeight="35" minWidth="45" prefHeight="35" prefWidth="45" onAction="#onLastImageButtonClick">
+                <graphic><ImageView fx:id="lastButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Show the last image of the open directory."/></tooltip>
+            </Button>
+
+            <Button fx:id="saveButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35" onAction="#onSaveButtonClick">
+                <graphic><ImageView fx:id="saveButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
+                <tooltip><Tooltip text="Convert and save the single open image file or all the files in the open directory."/></tooltip>
+            </Button>
+
+            <ToggleButton fx:id="maximizeToggleButton" minHeight="35" minWidth="35" prefHeight="35" prefWidth="35">
                 <FlowPane.margin>
                     <Insets left="20" right="20" />
                 </FlowPane.margin>
-                <font><Font size="15"/></font>
+                <graphic><ImageView fx:id="maximizeToggleButtonImageView" fitWidth="35" preserveRatio="true"/></graphic>
                 <tooltip><Tooltip text="Activate to see the images at real size, inside a scrolling viewport."/></tooltip>
             </ToggleButton>
 

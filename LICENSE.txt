@@ -5,11 +5,13 @@ copy or use the software.
 License agreement for
 Inhomogeneous Beam Brightness Intensity Converter (IBBIC)
 
-Copyright © 2022-2023, Giovanni Volpintesta, all rights reserved.
 Copyright © 2022-2023, Francesco Volpintesta, all rights reserved.
+Copyright © 2022-2023, Giovanni Volpintesta, all rights reserved.
 
 This software, in source and binary forms, including, but not limited to, any code, program,
-documentation, graphic and accessory material, is provided only for evaluation purposes.
+documentation, graphic and accessory material, is provided for evaluation-only purposes.
+Any usage of this software is permitted only if the academic work it belongs to is clearly mentioned,
+and if the above copyright holders are clearly mentioned too. 
 Redistribution in source and binary forms, with or without modification, is not permitted.
 
 This software is provided by the copyright holders and contributors "as is" and

@@ -1,3 +1,5 @@
 setup_installation_directories_win64.bat
 set_environment_variables_win64.bat
 launcher_win64.bat
+..\LICENSE.txt
+..\README.md

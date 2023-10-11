@@ -1,10 +1,11 @@
 @ECHO OFF
 
 set CURRENT_BATCH_FILE_PATH=%~dp0
+set SETUP_DIRECTORY_FILE=%~f1
 
 :: Set environment variables for libraries intallation paths.
 :: Set variables: JAVA_INSTALL_DIR, JAVAFX_INSTALL_DIR, OPENCV_INSTALL_DIR
-call "%CURRENT_BATCH_FILE_PATH%\setup_installation_directories_win64.bat"
+call "%SETUP_DIRECTORY_FILE%"
 @ECHO OFF
 
 :: For developers: to build and launch the jar use the JDK installation path
