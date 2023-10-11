@@ -42,6 +42,14 @@ public class ConverterWindowController
     private static final String noiseReductionButtonIconResourceName = "/icons/noise_reduction_icon.png";
     private static final String maxContrastButtonIconResourceName = "/icons/max_constrast_icon.png";
     private static final String thresholdTestHandlerIconResourceName = "/icons/threshold_handler_icon.png";
+    private static final String firstItemIconResourceName = "/icons/first_item_icon.png";
+    private static final String lastItemIconResourceName = "/icons/last_item_icon.png";
+    private static final String nextItemIconResourceName = "/icons/next_item_icon.png";
+    private static final String previousItemIconResourceName = "/icons/previous_item_icon.png";
+    private static final String magnifyIconResourceName = "/icons/magnify_icon.png";
+    private static final String saveIconResourceName = "/icons/save_icon.png";
+    private static final String openDirectoryIconResourceName = "/icons/open_directory_icon.png";
+    private static final String openImageIconResourceName = "/icons/open_image_icon.png";
 
     private static final String previewImageType = "png";
 
@@ -54,12 +62,20 @@ public class ConverterWindowController
     @FXML private ImageView sourceImageView;
     @FXML private ImageView convertedImageView;
 
+    @FXML private ImageView openFileButtonImageView;
+    @FXML private ImageView openDirectoryButtonImageView;
     @FXML private Button firstButton;
+    @FXML private ImageView firstButtonImageView;
     @FXML private Button previousButton;
+    @FXML private ImageView previousButtonImageView;
     @FXML private Button nextButton;
+    @FXML private ImageView nextButtonImageView;
     @FXML private Button lastButton;
+    @FXML private ImageView lastButtonImageView;
     @FXML private ToggleButton maximizeToggleButton;
+    @FXML private ImageView maximizeToggleButtonImageView;
     @FXML private Button saveButton;
+    @FXML private ImageView saveButtonImageView;
 
     @FXML private ToggleButton previewConversionToggleButton;
     @FXML private ImageView previewConversionToggleButtonImageView;
@@ -201,6 +217,55 @@ public class ConverterWindowController
         verticalScrollValue = 0;
         horizontalScrollBar.setVisible(false);
         verticalScrollBar.setVisible(false);
+
+/*
+
+openImageIconResourceName
+openDirectoryIconResourceName
+firstItemIconResourceName
+previousItemIconResourceName
+nextItemIconResourceName
+lastItemIconResourceName
+magnifyIconResourceName
+saveIconResourceName
+
+
+
+     openFileButton
+     openDirectoryButton
+     firstButton
+     previousButton
+     nextButton
+     lastButton
+     maximizeToggleButton
+     saveButton
+
+ */
+
+        InputStream openFileButtonImageStream = getClass().getResourceAsStream(openImageIconResourceName);
+        openFileButtonImageView.setImage(openFileButtonImageStream != null ? new Image(openFileButtonImageStream) : null);
+
+        InputStream openDirectoryButtonImageStream = getClass().getResourceAsStream(openDirectoryIconResourceName);
+        openDirectoryButtonImageView.setImage(openDirectoryButtonImageStream != null ? new Image(openDirectoryButtonImageStream) : null);
+
+        InputStream firstButtonImageStream = getClass().getResourceAsStream(firstItemIconResourceName);
+        firstButtonImageView.setImage(firstButtonImageStream != null ? new Image(firstButtonImageStream) : null);
+
+        InputStream previousButtonImageStream = getClass().getResourceAsStream(previousItemIconResourceName);
+        previousButtonImageView.setImage(previousButtonImageStream != null ? new Image(previousButtonImageStream) : null);
+
+        InputStream nextButtonImageStream = getClass().getResourceAsStream(nextItemIconResourceName);
+        nextButtonImageView.setImage(nextButtonImageStream != null ? new Image(nextButtonImageStream) : null);
+
+        InputStream lastButtonImageStream = getClass().getResourceAsStream(lastItemIconResourceName);
+        lastButtonImageView.setImage(lastButtonImageStream != null ? new Image(lastButtonImageStream) : null);
+
+        InputStream maximizeToggleButtonImageStream = getClass().getResourceAsStream(magnifyIconResourceName);
+        maximizeToggleButtonImageView.setImage(maximizeToggleButtonImageStream != null ? new Image(maximizeToggleButtonImageStream) : null);
+
+        InputStream saveButtonImageStream = getClass().getResourceAsStream(saveIconResourceName);
+        saveButtonImageView.setImage(saveButtonImageStream != null ? new Image(saveButtonImageStream) : null);
+
 
         InputStream previewConversionButtonImageStream = getClass().getResourceAsStream(previewConversionIconResourceName);
         previewConversionToggleButtonImageView.setImage(previewConversionButtonImageStream != null ? new Image(previewConversionButtonImageStream) : null);
