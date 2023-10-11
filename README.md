@@ -38,10 +38,10 @@ discussed in the article.
 
 ### How to install:
 
-1) Download and extract the program zip file into a directory of your chose. Builds can be found, on GitHub, listed in the "tags" page. You can find a link to the "tags" list under the branch selector or under "Releases" on the right. Each "tag" refers to a build. Download the latest build. When you select a tag, you will find the built project inside a ZIP archive and the source code. As a user, you are only interested in the built project, which is executable. The name of the ZIP package is "IBBIC-[VERSION]-[PLATFORM].zip" (e.g.: "IBBIC-1.1.1-win64.zip").
-	- Build archive of the IBBIC latest version from this link: https://github.com/Volpintesta/IBBIC/releases/latest 
+1) Download and extract the program zip file into a directory of your chose. As a user, you are only interested in the built project, which is executable and is released inside a package named as follows: "IBBIC-[VERSION]-[PLATFORM].zip" (e.g.: "IBBIC-1.1.2-win64.zip").
+	- Get the IBBIC latest version from this link: https://github.com/Volpintesta/IBBIC/releases/latest 
 		Download and extract the ZIP archive named IBBIC-<version>-win64.zip 
-	- You can find the older versions here: https://github.com/Volpintesta/IBBIC/tags
+	- You can find the older versions here: https://github.com/Volpintesta/IBBIC/releases
 	- NOTE 1: The build ZIP archive should contain only an "IBBIC.jar" file and some ".bat" and text files.
 		If this is not the case, you have downloaded the source project, which should be built, instead of a build, which can be executed.
 		Try to download the build.	
